@@ -1,0 +1,3 @@
+# All generated draft artifacts and the reference cache live under build/.
+build/
+.DS_Store/
