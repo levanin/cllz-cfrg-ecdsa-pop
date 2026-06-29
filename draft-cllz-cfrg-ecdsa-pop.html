@@ -1405,7 +1405,11 @@ to the integer reduction mod <code>n_p</code> of its x-coordinate.<a href="#sect
       </h2>
 <p id="section-3-1">The holder possesses an ECDSA key pair <code>(x, Q)</code> with <code>Q = x*P</code> over P-256,
 where <code>Q</code> has been certified inside a credential (e.g., as committed BBS
-messages).  At presentation time the verifier supplies a fresh nonce <code>nonce</code>;
+messages).  The device public key <span class="bcp14">MAY</span> be carried into the credential as a
+<em>committed message</em> via blind issuance (<span>[<a href="#BLIND-BBS" class="cite xref">BLIND-BBS</a>]</span>), so that the issuer
+signs over <code>Q</code> without learning it; in that case the Pedersen commitment to <code>Q</code>
+produced during issuance is the input to the transfer of <a href="#transfer" class="auto internal xref">Section 5</a>.  At
+presentation time the verifier supplies a fresh nonce <code>nonce</code>;
 the holder uses the secure element to produce an ECDSA signature on <code>nonce</code> and
 then proves, in zero knowledge, that it knows such a signature under the
 committed key <code>Q</code>, without revealing <code>Q</code>.<a href="#section-3-1" class="pilcrow">¶</a></p>
@@ -1851,21 +1855,30 @@ credential curve; these are the inputs <code>C_i</code> to the transfer of
 <a href="#transfer" class="auto internal xref">Section 5</a>.<a href="#section-10-2.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-10-2.2">
-          <p id="section-10-2.2.1">The presentation <code>nonce</code> used to form <code>alpha</code> and <code>Hpt</code> (<a href="#overview" class="auto internal xref">Section 3</a>) <span class="bcp14">MUST</span>
-be derived from the presentation headers exactly as required by the
-device-binding sub-proof of <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span>, so that the PoP is freshly bound
-to this presentation.<a href="#section-10-2.2.1" class="pilcrow">¶</a></p>
+          <p id="section-10-2.2.1">These eight slots <span class="bcp14">MAY</span> be populated at issuance as committed messages using
+blind BBS issuance (<span>[<a href="#BLIND-BBS" class="cite xref">BLIND-BBS</a>]</span>): the holder sends the issuer a commitment
+to its device public key (with the holder-held blinding scalar) and a proof
+of its correctness, and the issuer blindly signs without learning <code>Q</code>.  This
+keeps the device secret key bound to the holder's secure element and unknown
+to the issuer, and the issuance-time commitment to <code>Q</code> is reused as the
+transfer input above.<a href="#section-10-2.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-10-2.3">
-          <p id="section-10-2.3.1">The sub-proof object carries <code>alg = "ecdsa-p256-db"</code>, the committed-message
-indices in its <code>input</code> field, and the serialized non-interactive PoP
-(<a href="#fiat-shamir" class="auto internal xref">Section 9</a>) as its <code>proof</code> bytes.<a href="#section-10-2.3.1" class="pilcrow">¶</a></p>
+          <p id="section-10-2.3.1">The presentation <code>nonce</code> used to form <code>alpha</code> and <code>Hpt</code> (<a href="#overview" class="auto internal xref">Section 3</a>) <span class="bcp14">MUST</span>
+be derived from the presentation headers exactly as required by the
+device-binding sub-proof of <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span>, so that the PoP is freshly bound
+to this presentation.<a href="#section-10-2.3.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-10-2.4">
-          <p id="section-10-2.4.1">The designated-expert requirement of <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span> -- that a sub-proof
+          <p id="section-10-2.4.1">The sub-proof object carries <code>alg = "ecdsa-p256-db"</code>, the committed-message
+indices in its <code>input</code> field, and the serialized non-interactive PoP
+(<a href="#fiat-shamir" class="auto internal xref">Section 9</a>) as its <code>proof</code> bytes.<a href="#section-10-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-10-2.5">
+          <p id="section-10-2.5.1">The designated-expert requirement of <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span> -- that a sub-proof
 binds to a commitment attested by the core proof -- is met because the
 transfer proof of <a href="#transfer" class="auto internal xref">Section 5</a> ties the Tom commitment <code>C_Q</code> to the
-credential-curve commitment produced by <code>CoreProofGen</code>.<a href="#section-10-2.4.1" class="pilcrow">¶</a></p>
+credential-curve commitment produced by <code>CoreProofGen</code>.<a href="#section-10-2.5.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="section-10-3">The PoP itself is agnostic to the credential scheme: any scheme that can
@@ -2007,6 +2020,10 @@ document does not create a new registry.<a href="#section-12-1" class="pilcrow">
 <dt id="BBS">[BBS]</dt>
         <dd>
 <span class="refAuthor">Looker, T.</span>, <span class="refAuthor">Kalos, V.</span>, <span class="refAuthor">Whitehead, A.</span>, and <span class="refAuthor">M. Lodder</span>, <span class="refTitle">"The BBS Signature Scheme"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-bbs-signatures-10</span>, <time datetime="2026-01-08" class="refDate">8 January 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-signatures-10">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-signatures-10</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="BLIND-BBS">[BLIND-BBS]</dt>
+        <dd>
+<span class="refAuthor">Kalos, V.</span> and <span class="refAuthor">G. M. Bernstein</span>, <span class="refTitle">"Blind BBS Signatures"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-bbs-blind-signatures-03</span>, <time datetime="2026-06-26" class="refDate">26 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-blind-signatures-03">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-blind-signatures-03</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="CDLS">[CDLS]</dt>
         <dd>
