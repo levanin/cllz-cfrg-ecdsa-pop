@@ -82,6 +82,7 @@ informative:
       - fullname: Alexandros Zacharakis
     date: 2025
   BBS: I-D.irtf-cfrg-bbs-signatures
+  BLIND-BBS: I-D.irtf-cfrg-bbs-blind-signatures
   RoK:
     title: "Algebraic Reductions of Knowledge"
     author:
@@ -253,7 +254,11 @@ to the integer reduction mod `n_p` of its x-coordinate.
 
 The holder possesses an ECDSA key pair `(x, Q)` with `Q = x*P` over P-256,
 where `Q` has been certified inside a credential (e.g., as committed BBS
-messages).  At presentation time the verifier supplies a fresh nonce `nonce`;
+messages).  The device public key MAY be carried into the credential as a
+*committed message* via blind issuance ({{BLIND-BBS}}), so that the issuer
+signs over `Q` without learning it; in that case the Pedersen commitment to `Q`
+produced during issuance is the input to the transfer of {{transfer}}.  At
+presentation time the verifier supplies a fresh nonce `nonce`;
 the holder uses the secure element to produce an ECDSA signature on `nonce` and
 then proves, in zero knowledge, that it knows such a signature under the
 committed key `Q`, without revealing `Q`.
@@ -627,6 +632,13 @@ When used as the `ecdsa-p256-db` sub-proof of {{MODULAR-BBS}}:
   proof (`CoreProofGen`) exposes these as Pedersen commitments over the
   credential curve; these are the inputs `C_i` to the transfer of
   {{transfer}}.
+- These eight slots MAY be populated at issuance as committed messages using
+  blind BBS issuance ({{BLIND-BBS}}): the holder sends the issuer a commitment
+  to its device public key (with the holder-held blinding scalar) and a proof
+  of its correctness, and the issuer blindly signs without learning `Q`.  This
+  keeps the device secret key bound to the holder's secure element and unknown
+  to the issuer, and the issuance-time commitment to `Q` is reused as the
+  transfer input above.
 - The presentation `nonce` used to form `alpha` and `Hpt` ({{overview}}) MUST
   be derived from the presentation headers exactly as required by the
   device-binding sub-proof of {{MODULAR-BBS}}, so that the PoP is freshly bound
