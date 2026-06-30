@@ -141,79 +141,44 @@ informative:
 
 --- abstract
 
-This document specifies a Schnorr-type, circuit-free zero-knowledge proof of
-possession (PoP) of an ECDSA signature produced under a committed public key
-over the NIST P-256 (secp256r1) curve. The PoP lets a credential holder prove,
-in zero knowledge, that it can produce a fresh ECDSA signature under a device
-public key without revealing that key, thereby providing device binding for
-privacy-preserving credentials whose presentation must remain unlinkable.
+This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature produced under a committed public key over the NIST P-256 (secp256r1) curve.
+The PoP lets a credential holder prove, in zero knowledge, that it can produce a fresh ECDSA signature under a device public key without revealing that key, thereby providing device binding for privacy-preserving credentials whose presentation must remain unlinkable.
 
-The construction is built exclusively from Sigma protocols: it decomposes the
-ECDSA verification equation into a scalar-multiplication relation and a
-point-addition relation over P-256, each proved with a dedicated Sigma
-protocol over a companion ("Tom") curve whose scalar field equals the base
-field of P-256. It is designed to be expressed using the interfaces of the
-CFRG Sigma-protocols specification and to serve as the device-binding
-sub-proof of the modular BBS / JSON Web Proofs construction. SNARK-based
-realizations of the same relation are out of scope.
+The construction is built exclusively from Sigma protocols: it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
+It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to serve as the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
+SNARK-based realizations of the same relation are out of scope.
 
 --- middle
 
 # Introduction
 
-Anonymous credentials enable privacy-preserving authentication: a holder
-presents an issuer-attested credential to a relying party while revealing only
-the minimum necessary information and while remaining unlinkable across
-presentations. BBS signatures {{BBS}} are a leading basis for such credentials
-and are being adopted in several standardization efforts.
+Anonymous credentials enable privacy-preserving authentication: a holder presents an issuer-attested credential to a relying party while revealing only the minimum necessary information and while remaining unlinkable across presentations.
+BBS signatures {{BBS}} are a leading basis for such credentials and are being adopted in several standardization efforts.
 
-A central requirement for credentials used in digital-identity deployments is
-*non-transferability*, usually achieved by *device binding*: the credential is
-bound to a key held in a secure element (SE) on the user's device, and at
-presentation time the holder produces a fresh signature -- a proof of
-possession (PoP) -- under the corresponding secret key, which never leaves the
-SE. Consumer-device secure elements are, in practice, restricted to ECDSA over
-P-256 and do not expose the pairing-friendly operations required by native
-anonymous-credential device binding. This document addresses that gap: it
-specifies how to prove possession of an ECDSA signature under a *committed*
-device public key, so that ECDSA device binding can be composed with a
-pairing-based credential layer such as BBS.
+A central requirement for credentials used in digital-identity deployments is *non-transferability*, usually achieved by *device binding*: the credential is bound to a key held in a secure element (SE) on the user's device, and at presentation time the holder produces a fresh signature -- a proof of possession (PoP) -- under the corresponding secret key, which never leaves the SE.
+Consumer-device secure elements are, in practice, restricted to ECDSA over P-256 and do not expose the pairing-friendly operations required by native anonymous-credential device binding.
+This document addresses that gap: it specifies how to prove possession of an ECDSA signature under a *committed* device public key, so that ECDSA device binding can be composed with a pairing-based credential layer such as BBS.
 
 ## Scope
 
 This document specifies only the *Schnorr-type* (Sigma-protocol-based) PoP.
-This is the most conservative construction in {{PAPER}}: it uses no arithmetic
-circuits and no general-purpose proof system, relying solely on Sigma
-protocols and Pedersen commitments. SNARK / circuit-based realizations of the
-same statement (the "foreign-field" and "native circuit" constructions of
-{{PAPER}}, and the Committed Schnorr reduction used by them) are explicitly
-out of scope.
+This is the most conservative construction in {{PAPER}}: it uses no arithmetic circuits and no general-purpose proof system, relying solely on Sigma protocols and Pedersen commitments.
+SNARK / circuit-based realizations of the same statement (the "foreign-field" and "native circuit" constructions of {{PAPER}}, and the Committed Schnorr reduction used by them) are explicitly out of scope.
 
-The proof is interactive as described, and is made non-interactive with the
-Fiat-Shamir transform ({{fiat-shamir}}).  Sigma protocols are composed using
-the interfaces of {{SIGMA}}, and the non-interactive transform and its codec
-are taken from the companion specification {{FIAT-SHAMIR}}.
+The proof is interactive as described, and is made non-interactive with the Fiat-Shamir transform ({{fiat-shamir}}).
+Sigma protocols are composed using the interfaces of {{SIGMA}}, and the non-interactive transform and its codec are taken from the companion specification {{FIAT-SHAMIR}}.
 
 ## Relationship to Other Specifications
 
 This document is designed to compose with two CFRG / IETF efforts:
 
-- {{SIGMA}} (Sigma protocols).  The sub-protocols specified here are Sigma
-  protocols and are described, where possible, using the `Group`,
-  `LinearRelation`, and `SigmaProtocol` abstractions of {{SIGMA}}. In
-  particular, the point-addition proof of {{point-addition}} is a batch of
-  linear relations whose group bases include commitments drawn from the
-  statement, and is therefore expressible through the `LinearRelation`
-  interface; the scalar-multiplication proof of {{scalar-mult}} is a custom
-  `SigmaProtocol` (a bit-challenge proof run with parallel repetition) that
-  internally invokes the point-addition proof.
+- {{SIGMA}} (Sigma protocols).
+  The sub-protocols specified here are Sigma protocols and are described, where possible, using the `Group`, `LinearRelation`, and `SigmaProtocol` abstractions of {{SIGMA}}.
+  In particular, the point-addition proof of {{point-addition}} is a batch of linear relations whose group bases include commitments drawn from the statement, and is therefore expressible through the `LinearRelation` interface; the scalar-multiplication proof of {{scalar-mult}} is a custom `SigmaProtocol` (a bit-challenge proof run with parallel repetition) that internally invokes the point-addition proof.
 
-- {{MODULAR-BBS}} (modular BBS sub-proofs).  The PoP specified here is intended
-  to instantiate the `ecdsa-p256-db` device-binding sub-proof of
-  {{MODULAR-BBS}}, which exposes the holder's P-256 public key as committed BBS
-  messages (key binding type `ecdsa-p256-limb4-64`) and binds the sub-proof to
-  a challenge derived from the presentation headers. {{integration}} describes
-  this binding.
+- {{MODULAR-BBS}} (modular BBS sub-proofs).
+  The PoP specified here is intended to instantiate the `ecdsa-p256-db` device-binding sub-proof of {{MODULAR-BBS}}, which exposes the holder's P-256 public key as committed BBS messages (key binding type `ecdsa-p256-limb4-64`) and binds the sub-proof to a challenge derived from the presentation headers.
+  {{integration}} describes this binding.
 
 This work was presented to the CFRG; see {{AGENDA126}}.
 
@@ -224,100 +189,77 @@ This work was presented to the CFRG; see {{AGENDA126}}.
 The following terms are used throughout.
 
 ECDSA curve (P-256):
-: The curve secp256r1 / NIST P-256 {{FIPS186-5}}{{SEC1}}.  `G_p` denotes its
-  group of points (prime order `n_p`), `P` a fixed generator, `F_q` its base
-  field, and `F_np` its scalar field.
+: The curve secp256r1 / NIST P-256 {{FIPS186-5}}{{SEC1}}.
+  `G_p` denotes its group of points (prime order `n_p`), `P` a fixed generator, `F_q` its base field, and `F_np` its scalar field.
 
 Tom curve (Tom-256):
-: A curve forming a "2-chain" with P-256: its scalar field equals the base
-  field `F_q` of P-256 (see {{ZKATTEST}}).  `G_t` denotes its group of points.
-  Arithmetic over `F_q` -- i.e. arithmetic on P-256 coordinates -- is therefore
-  *native* in the scalar field of `G_t`, which is what makes the
-  Sigma-protocol proofs efficient.
+: A curve forming a "2-chain" with P-256: its scalar field equals the base field `F_q` of P-256 (see {{ZKATTEST}}).
+  `G_t` denotes its group of points.
+  Arithmetic over `F_q` -- i.e. arithmetic on P-256 coordinates -- is therefore *native* in the scalar field of `G_t`, which is what makes the Sigma-protocol proofs efficient.
 
 Credential curve:
-: The pairing-friendly curve used by the credential layer (e.g., BLS12-381 for
-  BBS), with scalar field `F_s`.  Commitments produced by the credential layer
-  live over this curve.
+: The pairing-friendly curve used by the credential layer (e.g., BLS12-381 for BBS), with scalar field `F_s`.
+  Commitments produced by the credential layer live over this curve.
 
 Pedersen commitment:
-: For a group `G` with independent generators `(g, h)` (and, for vectors,
-  `(g_1,...,g_k, h)`), the commitment to message `m` with randomness `rho` is
-  `Commit(m; rho) = m*g + rho*h` (resp. `sum_i m_i*g_i + rho*h`).  Pedersen
-  commitments used here are perfectly hiding and computationally binding under
-  the discrete-log assumption in `G`.
+: For a group `G` with independent generators `(g, h)` (and, for vectors, `(g_1,...,g_k, h)`), the commitment to message `m` with randomness `rho` is `Commit(m; rho) = m*g + rho*h` (resp. `sum_i m_i*g_i + rho*h`).
+  Pedersen commitments used here are perfectly hiding and computationally binding under the discrete-log assumption in `G`.
 
-Throughout, lowercase letters denote scalars and uppercase letters denote
-group elements.  `x*P` denotes scalar multiplication and `A + B` denotes group
-addition.  `H(.)` is a hash into `F_np` (SHA-256 reduced mod `n_p`, as in
-ECDSA), and `F: G_p -> F_np` is the ECDSA conversion function mapping a point
-to the integer reduction mod `n_p` of its x-coordinate.
+Throughout, lowercase letters denote scalars and uppercase letters denote group elements.
+`x*P` denotes scalar multiplication and `A + B` denotes group addition.
+`H(.)` is a hash into `F_np` (SHA-256 reduced mod `n_p`, as in ECDSA), and `F: G_p -> F_np` is the ECDSA conversion function mapping a point to the integer reduction mod `n_p` of its x-coordinate.
 
 # Overview
 
-The holder possesses an ECDSA key pair `(x, Q)` with `Q = x*P` over P-256,
-where `Q` has been certified inside a credential (e.g., as committed BBS
-messages).  The device public key MAY be carried into the credential as a
-*committed message* via blind issuance ({{BLIND-BBS}}), so that the issuer
-signs over `Q` without learning it; in that case the Pedersen commitment to `Q`
-produced during issuance is the input to the transfer of {{transfer}}.  At
-presentation time the verifier supplies a fresh nonce `nonce`;
-the holder uses the secure element to produce an ECDSA signature on `nonce` and
-then proves, in zero knowledge, that it knows such a signature under the
-committed key `Q`, without revealing `Q`.
+The holder possesses an ECDSA key pair `(x, Q)` with `Q = x*P` over P-256, where `Q` has been certified inside a credential (e.g., as committed BBS messages).
+The device public key MAY be carried into the credential as a *committed message* via blind issuance ({{BLIND-BBS}}), so that the issuer signs over `Q` without learning it; in that case the Pedersen commitment to `Q` produced during issuance is the input to the transfer of {{transfer}}.
+At presentation time the verifier supplies a fresh nonce `nonce`; the holder uses the secure element to produce an ECDSA signature on `nonce` and then proves, in zero knowledge, that it knows such a signature under the committed key `Q`, without revealing `Q`.
 
-As shown in {{ZKATTEST}}, an ECDSA signature `(r, s)` on a message can be
-deterministically rewritten as a pair `(K, z)` with `K = k*P`, `r = F(K)`, and
-`z = r^{-1} * s mod n_p`.  Verification then reduces to checking
+As shown in {{ZKATTEST}}, an ECDSA signature `(r, s)` on a message can be deterministically rewritten as a pair `(K, z)` with `K = k*P`, `r = F(K)`, and `z = r^{-1} * s mod n_p`.
+Verification then reduces to checking
 
 ~~~
 z*K = H(m) * r^{-1} * P + Q
 ~~~
 
-Because the signature is fresh and single-use, the value `K` MAY be revealed as
-part of the statement without harming unlinkability; only the long-lived public
-key `Q` must stay hidden.  Setting
+Because the signature is fresh and single-use, the value `K` MAY be revealed as part of the statement without harming unlinkability; only the long-lived public key `Q` must stay hidden.
+Setting
 
 ~~~
 alpha = H(nonce) * F(K)^{-1}  mod n_p          (a public scalar)
 Hpt   = alpha * P                              (a public P-256 point)
 ~~~
 
-the statement to be proved becomes: knowledge of a scalar `z` and an opening of
-the commitment to `Q` such that
+the statement to be proved becomes: knowledge of a scalar `z` and an opening of the commitment to `Q` such that
 
 ~~~
 z*K = Hpt + Q                                  (Eq. POP)
 ~~~
 
-This is a computation over P-256 with `K`, `Hpt` public, `z` secret, and `Q`
-committed.
+This is a computation over P-256 with `K`, `Hpt` public, `z` secret, and `Q` committed.
 
-The PoP proves (Eq. POP) in three reductions, run between prover P (holder) and
-verifier V (relying party):
+The PoP proves (Eq. POP) in three reductions, run between prover P (holder) and verifier V (relying party):
 
-1. Commitment transfer ({{transfer}}).  Transfer the commitment to `Q` from the
-   credential curve to the Tom curve, where P-256 coordinate arithmetic is
-   native.  After this step `Q = (x, y)` is committed as two Tom Pedersen
-   commitments `C_x = Commit(x; rho_x)`, `C_y = Commit(y; rho_y)`.
+1. Commitment transfer ({{transfer}}).
+   Transfer the commitment to `Q` from the credential curve to the Tom curve, where P-256 coordinate arithmetic is native.
+   After this step `Q = (x, y)` is committed as two Tom Pedersen commitments `C_x = Commit(x; rho_x)`, `C_y = Commit(y; rho_y)`.
 
-2. Reduction to curve operations ({{rok-group}}).  Introduce `Z = z*K` and its
-   commitment `C_Z`, and split (Eq. POP) into a scalar-multiplication statement
-   (`Z = z*K`) and a point-addition statement (`Z = Hpt + Q`).
+2. Reduction to curve operations ({{rok-group}}).
+   Introduce `Z = z*K` and its commitment `C_Z`, and split (Eq. POP) into a scalar-multiplication statement (`Z = z*K`) and a point-addition statement (`Z = Hpt + Q`).
 
-3. Curve-operation proofs.  Prove the two statements with the Sigma protocols of
-   {{scalar-mult}} (scalar multiplication) and {{point-addition}} (point
-   addition), run in parallel.
+3. Curve-operation proofs.
+   Prove the two statements with the Sigma protocols of {{scalar-mult}} (scalar multiplication) and {{point-addition}} (point addition), run in parallel.
 
-Symbolically, with `x` denoting parallel AND-composition and `o` sequential
-composition of reductions (see {{RoK}}):
+Symbolically, with `x` denoting parallel AND-composition and `o` sequential composition of reductions (see {{RoK}}):
 
 ~~~
 PoP = ( SM x PA ) o group o transfer
 ~~~
 
 Each step is an honest-verifier zero-knowledge, public-coin reduction.
-Unrolled, their composition is a five-round (i.e. five-message) public-coin interactive protocol between prover and verifier where the commitment/response flows of the underlying protocols interleave into five moves. This interactive protocol is then made non-interactive by applying the Fiat-Shamir transform ({{fiat-shamir}}), deriving every verifier challenge from the transcript; the exact per-challenge transcript inputs remain to be specified (see {{transfer}} and {{fiat-shamir}}). The result is a non-interactive zero-knowledge proof of knowledge for (Eq. POP).
+Unrolled, their composition is a five-round (i.e. five-message) public-coin interactive protocol between prover and verifier where the commitment/response flows of the underlying protocols interleave into five moves.
+This interactive protocol is then made non-interactive by applying the Fiat-Shamir transform ({{fiat-shamir}}), deriving every verifier challenge from the transcript; the exact per-challenge transcript inputs remain to be specified (see {{transfer}} and {{fiat-shamir}}).
+The result is a non-interactive zero-knowledge proof of knowledge for (Eq. POP).
 
 # Parameters and Encodings
 
@@ -325,22 +267,17 @@ Unrolled, their composition is a five-round (i.e. five-message) public-coin inte
 
 An instantiation of this PoP fixes:
 
-- the ECDSA curve P-256, with generator `P`, group order `n_p`, base field
-  `F_q`;
-- the Tom curve Tom-256 with group `G_t` whose scalar field is `F_q`, with two
-  independent Pedersen generators `(G_t, H_t)`;
-- the credential-layer commitment scheme (e.g., Pedersen over BLS12-381) and
-  its generators, as fixed by the credential profile (e.g. {{MODULAR-BBS}}).
+- the ECDSA curve P-256, with generator `P`, group order `n_p`, base field `F_q`;
+- the Tom curve Tom-256 with group `G_t` whose scalar field is `F_q`, with two independent Pedersen generators `(G_t, H_t)`;
+- the credential-layer commitment scheme (e.g., Pedersen over BLS12-381) and its generators, as fixed by the credential profile (e.g. {{MODULAR-BBS}}).
 
-The generators `(G_t, H_t)` MUST be sampled verifiably (e.g., via
-hash-to-curve from fixed domain-separation strings) so that no party knows their relative discrete logarithm. The concrete instantiation of such parameters should be resolved by future standardisation efforts.
+The generators `(G_t, H_t)` MUST be sampled verifiably (e.g., via hash-to-curve from fixed domain-separation strings) so that no party knows their relative discrete logarithm.
+The concrete instantiation of such parameters should be resolved by future standardisation efforts.
 
 ## Committing to a P-256 Public Key {#encoding}
 
-A P-256 public key is a point `Q = (x, y)` in `F_q^2`.  Because the
-credential-layer commitment commits to scalars of the credential curve (`F_s`),
-each coordinate is encoded as a fixed number of limbs in `F_s`, and the limbs
-are committed with Pedersen.
+A P-256 public key is a point `Q = (x, y)` in `F_q^2`.
+Because the credential-layer commitment commits to scalars of the credential curve (`F_s`), each coordinate is encoded as a fixed number of limbs in `F_s`, and the limbs are committed with Pedersen.
 
 This document adopts the approach of {{PAPER}}, where each of `x` and `y` is split into two 128-bit little-endian limbs, i.e.
 
@@ -348,32 +285,21 @@ This document adopts the approach of {{PAPER}}, where each of `x` and `y` is spl
 x = x_0 + 2^128 * x_1,   0 <= x_i < 2^128
 ~~~
 
-and likewise for `y`.  The modular BBS framework of {{MODULAR-BBS}} instead
-encodes the key as four 64-bit limbs (the `ecdsa-p256-limb4-64` key binding),
-an encoding it inherits from the modular credential framework of {{LSZ}}; this
-document opts for 128-bit limbs, which guarantee 112 bits of security for the
-transfer of {{transfer}} -- sufficient for this application.  The proofs below
-are agnostic to the choice (see {{transfer}}), but we opt for 128 bit limbs for improved efficiency.
+and likewise for `y`.
+The modular BBS framework of {{MODULAR-BBS}} instead encodes the key as four 64-bit limbs (the `ecdsa-p256-limb4-64` key binding), an encoding it inherits from the modular credential framework of {{LSZ}}; this document opts for 128-bit limbs, which guarantee 112 bits of security for the transfer of {{transfer}} -- sufficient for this application.
+The proofs below are agnostic to the choice (see {{transfer}}), but we opt for 128 bit limbs for improved efficiency.
 
-The credential layer is responsible, at issuance, for guaranteeing that
-(a) each limb lies in its declared range and (b) `(x, y)` is a valid P-256
-point.  This PoP assumes those facts hold a priori and does not re-prove them.
+The credential layer is responsible, at issuance, for guaranteeing that (a) each limb lies in its declared range and (b) `(x, y)` is a valid P-256 point.
+This PoP assumes those facts hold a priori and does not re-prove them.
 
 # Commitment Transfer {#transfer}
 
-The PoP operates over the Tom curve, but the credential layer commits `Q` over
-the credential curve.  The transfer step re-expresses the commitment to `Q` as
-commitments over Tom-256, preserving the committed value.  Following {{PAPER}},
-it is structured as a *reduction of knowledge* ({{RoK}}): a public-coin
-interactive reduction that maps a committed statement under the credential-curve
-scheme to the *same* statement under the Tom-curve scheme, after which the
-curve-operation proofs of {{rok-group}} take over.
+The PoP operates over the Tom curve, but the credential layer commits `Q` over the credential curve.
+The transfer step re-expresses the commitment to `Q` as commitments over Tom-256, preserving the committed value.
+Following {{PAPER}}, it is structured as a *reduction of knowledge* ({{RoK}}): a public-coin interactive reduction that maps a committed statement under the credential-curve scheme to the *same* statement under the Tom-curve scheme, after which the curve-operation proofs of {{rok-group}} take over.
 
-Let `Commit` be the credential-curve commitment scheme and `Commit~` the
-Tom-curve scheme.  Generically, for each committed value `m_i` with
-credential-curve commitment `C_i`, the prover produces a fresh Tom commitment
-`C~_i = Commit~(m_i; rho~_i)` and proves, with a public-coin proof of knowledge
-`EQ`, the relation
+Let `Commit` be the credential-curve commitment scheme and `Commit~` the Tom-curve scheme.
+Generically, for each committed value `m_i` with credential-curve commitment `C_i`, the prover produces a fresh Tom commitment `C~_i = Commit~(m_i; rho~_i)` and proves, with a public-coin proof of knowledge `EQ`, the relation
 
 ~~~
 R_eq = { (C_i, C~_i ; m_i, rho_i, rho~_i) :
@@ -381,29 +307,22 @@ R_eq = { (C_i, C~_i ; m_i, rho_i, rho~_i) :
             C~_i = Commit~(m_i; rho~_i) }
 ~~~
 
-i.e. that `C_i` and `C~_i` open to the same value.  All instances of `EQ` run
-in parallel.
+i.e. that `C_i` and `C~_i` open to the same value.
+All instances of `EQ` run in parallel.
 
-For Pedersen-to-Pedersen transfer across the credential and Tom curves, `EQ`
-MUST be instantiated with a cross-group equality-of-opening proof for
-small-integer messages (the technique of {{OKMZ}}); the limb encoding of
-{{encoding}} guarantees the small-message precondition.
+For Pedersen-to-Pedersen transfer across the credential and Tom curves, `EQ` MUST be instantiated with a cross-group equality-of-opening proof for small-integer messages (the technique of {{OKMZ}}); the limb encoding of {{encoding}} guarantees the small-message precondition.
 
 ## Protocol
 
-Unrolling the reduction of {{PAPER}} with `EQ` instantiated by the cross-group
-proof of {{OKMZ}} gives the following per-limb, public-coin protocol.  It is run
-in parallel over all committed limbs, sharing a single challenge `c`.  Write
-`(g, h)` for the credential-curve Pedersen generators and `(G_t, H_t)` for the
-Tom generators ({{encoding}}), and let `b_m`, `b_c`, `b_f` be the {{OKMZ}}
-message-bound, challenge, and slack widths, with
+Unrolling the reduction of {{PAPER}} with `EQ` instantiated by the cross-group proof of {{OKMZ}} gives the following per-limb, public-coin protocol.
+It is run in parallel over all committed limbs, sharing a single challenge `c`.
+Write `(g, h)` for the credential-curve Pedersen generators and `(G_t, H_t)` for the Tom generators ({{encoding}}), and let `b_m`, `b_c`, `b_f` be the {{OKMZ}} message-bound, challenge, and slack widths, with
 
 ~~~
 b_m + b_c + b_f  <  log2( min(|F_s|, |F_q|) )
 ~~~
 
-so that every value below stays an integer in both scalar fields (no
-wraparound).
+so that every value below stays an integer in both scalar fields (no wraparound).
 
 ~~~
 Prover P                                  Verifier V
@@ -434,43 +353,26 @@ Verifier checks (per limb i):
   (3)  z_i in R                                  # range bound: no wraparound
 ~~~
 
-The abort in step 3 is the rejection sampling of {{OKMZ}}; the admissible range
-`R` and the exact bound widths are those of {{OKMZ}}, to which implementations
-MUST conform.  On acceptance, both parties use Pedersen homomorphism to fold the
-per-limb Tom commitments `C~_i`, weighted by the appropriate powers of `2^b_m`,
-into the two single-scalar coordinate commitments
+The abort in step 3 is the rejection sampling of {{OKMZ}}; the admissible range `R` and the exact bound widths are those of {{OKMZ}}, to which implementations MUST conform.
+On acceptance, both parties use Pedersen homomorphism to fold the per-limb Tom commitments `C~_i`, weighted by the appropriate powers of `2^b_m`, into the two single-scalar coordinate commitments
 
 ~~~
 C_x = Commit~(x; rho_x),    C_y = Commit~(y; rho_y)
 ~~~
 
-These two commitments, together denoted `C_Q`, are the output statement of the
-reduction and the committed form of `Q` used by the remaining proofs.
+These two commitments, together denoted `C_Q`, are the output statement of the reduction and the committed form of `Q` used by the remaining proofs.
 
-This document adopts 128-bit limbs (`b_m = 128`) for the transfer, as in
-{{PAPER}}: this minimizes the number of cross-group instances, and with the
-{{OKMZ}} parameters achieves 112-bit security.  The 64-bit limbs of the
-`ecdsa-p256-limb4-64` encoding ({{encoding}}) work equally well -- they leave
-more headroom below `min(|F_s|, |F_q|)` and so can reach higher soundness -- at
-the cost of twice as many cross-group instances; profiles MAY use either, and
-profiles with stricter requirements SHOULD adjust the limb size and repetition
-accordingly.
+This document adopts 128-bit limbs (`b_m = 128`) for the transfer, as in {{PAPER}}: this minimizes the number of cross-group instances, and with the {{OKMZ}} parameters achieves 112-bit security.
+The 64-bit limbs of the `ecdsa-p256-limb4-64` encoding ({{encoding}}) work equally well -- they leave more headroom below `min(|F_s|, |F_q|)` and so can reach higher soundness -- at the cost of twice as many cross-group instances; profiles MAY use either, and profiles with stricter requirements SHOULD adjust the limb size and repetition accordingly.
 
-The exact Fiat-Shamir binding for this transfer is not yet fixed by this
-document.  In particular, the precise inputs absorbed before the challenge `c`
--- the domain separator, the credential- and Tom-curve commitments `C_i`,
-`C~_i`, the announcements `A_i`, `A~_i`, and the {{OKMZ}} bound parameters --
-remain to be specified, and MUST be pinned down (consistent with {{FIAT-SHAMIR}}
-and {{fiat-shamir}}) before this profile is interoperable.  The move structure
-above is normative; its exact byte-level Fiat-Shamir inputs are deferred to a
-future revision.
+The exact Fiat-Shamir binding for this transfer is not yet fixed by this document.
+In particular, the precise inputs absorbed before the challenge `c` -- the domain separator, the credential- and Tom-curve commitments `C_i`, `C~_i`, the announcements `A_i`, `A~_i`, and the {{OKMZ}} bound parameters -- remain to be specified, and MUST be pinned down (consistent with {{FIAT-SHAMIR}} and {{fiat-shamir}}) before this profile is interoperable.
+The move structure above is normative; its exact byte-level Fiat-Shamir inputs are deferred to a future revision.
 
 # Reduction to Curve Operations {#rok-group}
 
-After transfer, the statement is (Eq. POP) with `Q` committed over Tom as
-`C_Q`, `K` and `Hpt` public.  The `group` reduction introduces the point
-`Z = z*K` and splits (Eq. POP) into independent scalar-multiplication and
-point-addition statements.
+After transfer, the statement is (Eq. POP) with `Q` committed over Tom as `C_Q`, `K` and `Hpt` public.
+The `group` reduction introduces the point `Z = z*K` and splits (Eq. POP) into independent scalar-multiplication and point-addition statements.
 
 Inputs:
 
@@ -481,25 +383,17 @@ relation:  z*K = Hpt + Q
 
 Protocol:
 
-1. P computes `Z = z*K`, samples randomness `rho_Z`, and sends
-   `C_Z = Commit~(Z; rho_Z)` (a Tom commitment to the P-256 point `Z`).
-2. Both parties compute `C_H = Commit~(Hpt; 0)`, the (deterministic, zero-
-   randomness) commitment to the public point `Hpt`.
+1. P computes `Z = z*K`, samples randomness `rho_Z`, and sends `C_Z = Commit~(Z; rho_Z)` (a Tom commitment to the P-256 point `Z`).
+2. Both parties compute `C_H = Commit~(Hpt; 0)`, the (deterministic, zero-randomness) commitment to the public point `Hpt`.
 3. The reduction outputs two statements:
 
-   - Scalar multiplication:
-     `statement_SM = (C_Z, K)`, `witness_SM = (Z, rho_Z, z)`, asserting
-     `Z = z*K`.
-   - Point addition:
-     `statement_PA = (C_Z, C_H, C_Q)`, `witness_PA` the openings of the three
-     commitments, asserting `Z = Hpt + Q`.
+   - Scalar multiplication: `statement_SM = (C_Z, K)`, `witness_SM = (Z, rho_Z, z)`, asserting `Z = z*K`.
+   - Point addition: `statement_PA = (C_Z, C_H, C_Q)`, `witness_PA` the openings of the three commitments, asserting `Z = Hpt + Q`.
 
-Note that `C_Q = (C_x, C_y)` is a pair of coordinate commitments; the
-point-addition proof of {{point-addition}} operates per coordinate.  Likewise
-`C_Z` and `C_H` are coordinate-commitment pairs.
+Note that `C_Q = (C_x, C_y)` is a pair of coordinate commitments; the point-addition proof of {{point-addition}} operates per coordinate.
+Likewise `C_Z` and `C_H` are coordinate-commitment pairs.
 
-The two output statements are then proved in parallel:
-`SM x PA`.
+The two output statements are then proved in parallel: `SM x PA`.
 
 # Scalar-Multiplication Proof {#scalar-mult}
 
@@ -510,31 +404,17 @@ R_SM = { ((C_Z, K) ; Z, rho_Z, z) :
             C_Z = Commit~(Z; rho_Z)  AND  Z = z*K }
 ~~~
 
-where `K` is a public P-256 point, `z` a secret scalar, and `Z` a P-256 point
-committed over Tom.
+where `K` is a public P-256 point, `z` a secret scalar, and `Z` a P-256 point committed over Tom.
 
-`SM` is the scalar-multiplication proof of CDLS
-{{CDLS}}, used here with one modification from {{PAPER}}: the original protocol
-additionally committed to the scalar, whereas here `z` is a free (uncommitted)
-witness, which improves efficiency.
+`SM` is the scalar-multiplication proof of CDLS {{CDLS}}, used here with one modification from {{PAPER}}: the original protocol additionally committed to the scalar, whereas here `z` is a free (uncommitted) witness, which improves efficiency.
 
-It is a bit-challenge Schnorr-type proof: a single execution uses a one-bit
-verifier challenge and has knowledge-soundness error `1/2`.  To reach error
-`2^-lambda`, `lambda` independent executions are run in parallel (`lambda = 128`
-is RECOMMENDED).  In one execution, the prover derives from its witness an
-auxiliary ("combined") instance using fresh randomness, sends the corresponding
-commitments, the verifier replies with a challenge bit, and the prover opens one
-of two related committed instances according to that bit; the point relation
-among the committed instances is established by invoking the point-addition
-proof `PA` ({{point-addition}}) in a parallel AND-composition.  The per-execution protocol is that
-of {{CDLS}} (Construction for `R_SM`); implementations MUST follow that
-specification, with the scalar treated as a free witness as noted above.
+It is a bit-challenge Schnorr-type proof: a single execution uses a one-bit verifier challenge and has knowledge-soundness error `1/2`.
+To reach error `2^-lambda`, `lambda` independent executions are run in parallel (`lambda = 128` is RECOMMENDED).
+In one execution, the prover derives from its witness an auxiliary ("combined") instance using fresh randomness, sends the corresponding commitments, the verifier replies with a challenge bit, and the prover opens one of two related committed instances according to that bit; the point relation among the committed instances is established by invoking the point-addition proof `PA` ({{point-addition}}) in a parallel AND-composition.
+The per-execution protocol is that of {{CDLS}} (Construction for `R_SM`); implementations MUST follow that specification, with the scalar treated as a free witness as noted above.
 
-When expressed via {{SIGMA}}, `SM` is a custom `SigmaProtocol` (not a plain
-`LinearRelation`): its challenge is a single bit and the protocol is run as
-`lambda` parallel repetitions.  Its zero-knowledge simulator follows the
-standard simulation for bit-challenge Sigma protocols (sample the challenge
-bit, then produce a consistent commitment and response).
+When expressed via {{SIGMA}}, `SM` is a custom `SigmaProtocol` (not a plain `LinearRelation`): its challenge is a single bit and the protocol is run as `lambda` parallel repetitions.
+Its zero-knowledge simulator follows the standard simulation for bit-challenge Sigma protocols (sample the challenge bit, then produce a consistent commitment and response).
 
 # Point-Addition Proof {#point-addition}
 
@@ -545,18 +425,12 @@ R_PA = { ((C_1, C_2, C_3) ; P_1, P_2, P_3, openings) :
             C_i = Commit~(P_i; rho_i)  AND  P_1 + P_2 = P_3 }
 ~~~
 
-over Tom commitments to the affine coordinates of `P_1 = (a_x, a_y)`,
-`P_2 = (b_x, b_y)`, `P_3 = (t_x, t_y)`, under the promise `P_1 != +-P_2` and
-`P_1, P_2 != identity` (guaranteed by the callers in this document).  Each
-`C_i` is a pair of coordinate commitments; we write `C_1 = (C[1], C[2])`,
-`C_2 = (C[3], C[4])`, `C_3 = (C[5], C[6])`, committing to
-`a_x, a_y, b_x, b_y, t_x, t_y` respectively, all over Tom with generators
-`(G, H) = (G_t, H_t)`.
+over Tom commitments to the affine coordinates of `P_1 = (a_x, a_y)`, `P_2 = (b_x, b_y)`, `P_3 = (t_x, t_y)`, under the promise `P_1 != +-P_2` and `P_1, P_2 != identity` (guaranteed by the callers in this document).
+Each `C_i` is a pair of coordinate commitments; we write `C_1 = (C[1], C[2])`, `C_2 = (C[3], C[4])`, `C_3 = (C[5], C[6])`, committing to `a_x, a_y, b_x, b_y, t_x, t_y` respectively, all over Tom with generators `(G, H) = (G_t, H_t)`.
 
 ## Affine Addition Constraints
 
-For `P_3 = P_1 + P_2` with `tau = (b_y - a_y) / (b_x - a_x)` over `F_q`, the
-affine addition law is equivalent to the three constraints
+For `P_3 = P_1 + P_2` with `tau = (b_y - a_y) / (b_x - a_x)` over `F_q`, the affine addition law is equivalent to the three constraints
 
 ~~~
 (C1)   tau * (b_x - a_x) = b_y - a_y
@@ -564,14 +438,12 @@ affine addition law is equivalent to the three constraints
 (C3)   tau * (a_x - t_x) = a_y + t_y
 ~~~
 
-together with `b_x - a_x != 0` (which enforces `P_1 != +-P_2`).  `PA` proves
-knowledge of openings of the coordinate commitments and of a commitment to
-`tau` satisfying (C1)-(C3).
+together with `b_x - a_x != 0` (which enforces `P_1 != +-P_2`).
+`PA` proves knowledge of openings of the coordinate commitments and of a commitment to `tau` satisfying (C1)-(C3).
 
 ## Protocol
 
-Both parties first recompute, by Pedersen homomorphism, the derived
-commitments
+Both parties first recompute, by Pedersen homomorphism, the derived commitments
 
 ~~~
 C_f1 = C[3] - C[1]        # commits to (b_x - a_x)   : factor of (C1)
@@ -581,13 +453,10 @@ C_f3 = C[1] - C[5]        # commits to (a_x - t_x)   : factor of (C3)
 C_p3 = C[2] + C[6]        # commits to (a_y + t_y)   : product of (C3)
 ~~~
 
-(Here `C_f_i`, `C_p_i` are the "factor" and "product" commitments of the i-th
-constraint.)  The prover commits to `tau` as `C_tau = tau*G + r_tau*H`.
+(Here `C_f_i`, `C_p_i` are the "factor" and "product" commitments of the i-th constraint.)  The prover commits to `tau` as `C_tau = tau*G + r_tau*H`.
 
-The protocol is a three-move public-coin Sigma protocol: the prover sends a
-commitment message, the verifier replies with a uniform challenge `c` in `F_q`,
-and the prover sends a response.  The verifier accepts iff all checks below
-hold.
+The protocol is a three-move public-coin Sigma protocol: the prover sends a commitment message, the verifier replies with a uniform challenge `c` in `F_q`, and the prover sends a response.
+The verifier accepts iff all checks below hold.
 
 ~~~
 Prover P                                      Verifier V
@@ -639,161 +508,100 @@ Verifier checks:
   (10) c*U1 + U2 == v_1*C_f1 + v_2*H
 ~~~
 
-Checks (1)-(2) and (5) are openings; checks (3)-(4) and (6) prove the
-multiplicative / squaring constraints (C1)-(C3) (check (4) is a squaring
-proof realizing constraint (C2)); checks (8)-(10) are the non-zero proof for
-`C_f1`, establishing `b_x - a_x != 0` and hence `P_1 != +-P_2`.
+Checks (1)-(2) and (5) are openings; checks (3)-(4) and (6) prove the multiplicative / squaring constraints (C1)-(C3) (check (4) is a squaring proof realizing constraint (C2)); checks (8)-(10) are the non-zero proof for `C_f1`, establishing `b_x - a_x != 0` and hence `P_1 != +-P_2`.
 
-> Note on optimizations (from {{PAPER}}): constraint (C2) uses a dedicated
-> squaring proof rather than a generic multiplication proof; the mask
-> `(a_tau, a_rtau)` of `C_tau` is shared across the three coordinate proofs;
-> and the standalone opening proof of `C[2]` is omitted when `PA` is composed
-> inside `SM` (the witness may be extracted with additional help from the openings in the transcript, see {{PAPER}}).  When `PA` is used standalone, an additional
-> check `(7) z_2*G + z_r2*H == T7 + c*C[2]` (with corresponding masks
-> `a_2, a_r2` and message `T7`) MUST be included.
+> Note on optimizations (from {{PAPER}}): constraint (C2) uses a dedicated squaring proof rather than a generic multiplication proof; the mask `(a_tau, a_rtau)` of `C_tau` is shared across the three coordinate proofs; and the standalone opening proof of `C[2]` is omitted when `PA` is composed inside `SM` (the witness may be extracted with additional help from the openings in the transcript, see {{PAPER}}).
+> When `PA` is used standalone, an additional check `(7) z_2*G + z_r2*H == T7 + c*C[2]` (with corresponding masks `a_2, a_r2` and message `T7`) MUST be included.
 
 ## Expressing PA via the Sigma-Protocols Interface
 
-Each of checks (1)-(6) and (9)-(10) has the form
-`linear_map(response) == commitment + challenge * image`, i.e. a {{SIGMA}}
-`LinearRelation` whose group bases are `G`, `H`, and statement commitments
-(`C_f1`, `C_tau`).  An implementation MAY therefore realize `PA` by allocating
-the scalar witnesses (`tau`, the coordinate values, and the opening
-randomizers) and elements (`G`, `H`, the `C_*` commitments) with
-`allocate_scalars` / `allocate_elements`, encoding (C1)-(C3) and the opening
-relations with `append_equation` and `set_elements`, and running the resulting
-batch as a single Sigma protocol.  The non-zero check (8) and the
-multiplicative structure of (3),(4),(6),(10) are captured by using statement
-commitments as bases (the standard Sigma technique for multiplication of
-committed values); they are not plain discrete-log relations over fixed
-generators.
+Each of checks (1)-(6) and (9)-(10) has the form `linear_map(response) == commitment + challenge * image`, i.e. a {{SIGMA}} `LinearRelation` whose group bases are `G`, `H`, and statement commitments (`C_f1`, `C_tau`).
+An implementation MAY therefore realize `PA` by allocating the scalar witnesses (`tau`, the coordinate values, and the opening randomizers) and elements (`G`, `H`, the `C_*` commitments) with `allocate_scalars` / `allocate_elements`, encoding (C1)-(C3) and the opening relations with `append_equation` and `set_elements`, and running the resulting batch as a single Sigma protocol.
+The non-zero check (8) and the multiplicative structure of (3),(4),(6),(10) are captured by using statement commitments as bases (the standard Sigma technique for multiplication of committed values); they are not plain discrete-log relations over fixed generators.
 
 # Non-Interactive Proofs (Fiat-Shamir) {#fiat-shamir}
 
-The interactive protocols above are public-coin and are made non-interactive
-with the Fiat-Shamir transform specified in the companion document
-{{FIAT-SHAMIR}}, applied to the Sigma protocols composed via {{SIGMA}}: each
-verifier challenge (`b` in {{scalar-mult}}, `c` in {{point-addition}}) is
-derived by absorbing, into the {{FIAT-SHAMIR}} codec (duplex sponge), a
-transcript that includes a protocol/version domain separator, the ciphersuite
-identifier, the full statement, and all prior prover messages.
+The interactive protocols above are public-coin and are made non-interactive with the Fiat-Shamir transform specified in the companion document {{FIAT-SHAMIR}}, applied to the Sigma protocols composed via {{SIGMA}}: each verifier challenge (`b` in {{scalar-mult}}, `c` in {{point-addition}}) is derived by absorbing, into the {{FIAT-SHAMIR}} codec (duplex sponge), a transcript that includes a protocol/version domain separator, the ciphersuite identifier, the full statement, and all prior prover messages.
 
-Implementations MUST use the codec and challenge-derivation of {{FIAT-SHAMIR}}
-and MUST include the following in the Fiat-Shamir transcript:
+Implementations MUST use the codec and challenge-derivation of {{FIAT-SHAMIR}} and MUST include the following in the Fiat-Shamir transcript:
 
 - a fixed domain-separation label for this PoP and its version;
-- the public statement of (Eq. POP): `K`, `nonce` (or `Hpt`), and the committed
-  key `C_Q` (and, after transfer, the Tom commitments);
-- for the bound presentation context, the challenge octets supplied by the
-  calling protocol (see {{integration}}).
+- the public statement of (Eq. POP): `K`, `nonce` (or `Hpt`), and the committed key `C_Q` (and, after transfer, the Tom commitments);
+- for the bound presentation context, the challenge octets supplied by the calling protocol (see {{integration}}).
 
-All parallel repetitions of `SM` and the parallel `SM x PA` AND-composition share a
-single Fiat-Shamir transcript.
+All parallel repetitions of `SM` and the parallel `SM x PA` AND-composition share a single Fiat-Shamir transcript.
 
 # Integration with Modular BBS {#integration}
 
 When used as the `ecdsa-p256-db` sub-proof of {{MODULAR-BBS}}:
 
-- The holder's P-256 public key occupies BBS message slots 0..7 under key
-  binding type `ecdsa-p256-limb4-64`, encoded as in {{encoding}}.  The BBS core
-  proof (`CoreProofGen`) exposes these as Pedersen commitments over the
-  credential curve; these are the inputs `C_i` to the transfer of
-  {{transfer}}.
-- These eight slots MAY be populated at issuance as committed messages using
-  blind BBS issuance ({{BLIND-BBS}}): the holder sends the issuer a commitment
-  to its device public key (with the holder-held blinding scalar) and a proof
-  of its correctness, and the issuer blindly signs without learning `Q`.  This
-  keeps the device secret key bound to the holder's secure element and unknown
-  to the issuer, and the issuance-time commitment to `Q` is reused as the
-  transfer input above.
-- The presentation `nonce` used to form `alpha` and `Hpt` ({{overview}}) MUST
-  be derived from the presentation headers exactly as required by the
-  device-binding sub-proof of {{MODULAR-BBS}}, so that the PoP is freshly bound
-  to this presentation.
-- The sub-proof object carries `alg = "ecdsa-p256-db"`, the committed-message
-  indices in its `input` field, and the serialized non-interactive PoP
-  ({{fiat-shamir}}) as its `proof` bytes.
-- The designated-expert requirement of {{MODULAR-BBS}} -- that a sub-proof
-  binds to a commitment attested by the core proof -- is met because the
-  transfer proof of {{transfer}} ties the Tom commitment `C_Q` to the
-  credential-curve commitment produced by `CoreProofGen`.
+- The holder's P-256 public key occupies BBS message slots 0..7 under key binding type `ecdsa-p256-limb4-64`, encoded as in {{encoding}}.
+  The BBS core proof (`CoreProofGen`) exposes these as Pedersen commitments over the credential curve; these are the inputs `C_i` to the transfer of {{transfer}}.
+- These eight slots MAY be populated at issuance as committed messages using blind BBS issuance ({{BLIND-BBS}}): the holder sends the issuer a commitment to its device public key (with the holder-held blinding scalar) and a proof of its correctness, and the issuer blindly signs without learning `Q`.
+  This keeps the device secret key bound to the holder's secure element and unknown to the issuer, and the issuance-time commitment to `Q` is reused as the transfer input above.
+- The presentation `nonce` used to form `alpha` and `Hpt` ({{overview}}) MUST be derived from the presentation headers exactly as required by the device-binding sub-proof of {{MODULAR-BBS}}, so that the PoP is freshly bound to this presentation.
+- The sub-proof object carries `alg = "ecdsa-p256-db"`, the committed-message indices in its `input` field, and the serialized non-interactive PoP ({{fiat-shamir}}) as its `proof` bytes.
+- The designated-expert requirement of {{MODULAR-BBS}} -- that a sub-proof binds to a commitment attested by the core proof -- is met because the transfer proof of {{transfer}} ties the Tom commitment `C_Q` to the credential-curve commitment produced by `CoreProofGen`.
 
-The PoP itself is agnostic to the credential scheme: any scheme that can
-expose a Pedersen commitment to the device public key over a curve supported by
-the transfer of {{transfer}} can use this sub-proof.
+The PoP itself is agnostic to the credential scheme: any scheme that can expose a Pedersen commitment to the device public key over a curve supported by the transfer of {{transfer}} can use this sub-proof.
+
+# Implementation Status
+
+> Note to the RFC Editor: please remove this section before publication.
+
+A public, benchmarked reference implementation of the complete Schnorr-type PoP specified here -- the `( SM x PA ) o group o transfer` composition of {{overview}}, including the {{OKMZ}} style commitment transfer of {{transfer}} and the Tom-256 scalar-multiplication and point-addition proofs -- is available at <https://github.com/alexandroszacharakis8/ecdsapop_t256ipa>.
+It is written in Rust and underlies the measurements reported in {{PAPER}}.
+
+{{PAPER}} gives three realizations of the same ECDSA-device-binding relation -- the Schnorr-type proof specified in this document and two circuit-based variants that are out of scope here (see {{scope}}) -- and earlier variants of the Schnorr-type approach appear in {{UBIQUE}}.
+The repository above is the specific implementation that matches this document's Schnorr-type protocol and parameter choices.
 
 # Security Considerations
 
 Knowledge soundness.
-: The composed protocol is a proof of knowledge for (Eq. POP) (see {{PAPER}}
-  for the analysis in the reductions-of-knowledge framework).  `SM` has
-  soundness error `2^-lambda` after `lambda` parallel repetitions; `PA` has
-  the negligible soundness error of a Sigma protocol over `F_q`.  Soundness of
-  the overall PoP additionally relies on the binding of all Pedersen
-  commitments, i.e. on the discrete-log assumption in both the credential curve
-  and the Tom curve, and on the small-message soundness precondition of the
-  transfer proof ({{transfer}}).
+: The composed protocol is a proof of knowledge for (Eq. POP) (see {{PAPER}} for the analysis in the reductions-of-knowledge framework).
+  `SM` has soundness error `2^-lambda` after `lambda` parallel repetitions; `PA` has the `2^-lambda` soundness error of a Sigma protocol over `F_q`.
+  At the moment, we set `lambda = 128`, but since the commitment linking protocol {{transfer}} achieves 112 bits of soundness for our proposed parameters, we may update to `lambda = 112` in future revisions.
+  Soundness of the overall PoP additionally relies on the binding of all Pedersen commitments, i.e. on the discrete-log assumption in both the credential curve and the Tom curve, and on the small-message soundness precondition of the transfer proof ({{transfer}}).
 
 Zero knowledge / unlinkability.
-: Each sub-protocol is honest-verifier zero-knowledge; with Fiat-Shamir over a
-  random oracle the composition is non-interactive zero-knowledge.  The
-  device public key `Q` is the only long-lived value and remains perfectly
-  hidden by the Pedersen commitments, so presentations are unlinkable.  The
-  ephemeral value `K` is fresh per signature and per presentation; revealing it
-  does not link presentations.  Implementations MUST use fresh randomness for
-  every commitment and every proof; reuse of the per-execution randomness in
-  `SM`, of commitment randomizers, or of the per-presentation `nonce` can leak
-  the secret key or link presentations.
+: Each sub-protocol is honest-verifier zero-knowledge; with Fiat-Shamir over a random oracle the composition is non-interactive zero-knowledge.
+  The device public key `Q` is the only long-lived value and remains perfectly hidden by the Pedersen commitments, so presentations are unlinkable.
+  The ephemeral value `K` is fresh per signature and per presentation; revealing it does not link presentations.
+  Implementations MUST use fresh randomness for every commitment and every proof; reuse of the per-execution randomness in `SM`, of commitment randomizers, or of the per-presentation `nonce` can leak the secret key or link presentations.
 
 Secure-element trust.
-: This PoP assumes the device secret key never leaves the secure element and
-  that the element produces signatures only on inputs presented to it; the
-  holder cannot extract the key.  Revealing `K` as part of the statement is
-  sound for proof of possession only under the honest-secure-element assumption
-  discussed in {{PAPER}}.
+: This PoP assumes the device secret key never leaves the secure element and that the element produces signatures only on inputs presented to it; the holder cannot extract the key.
+  Revealing `K` as part of the statement is sound for proof of possession only under the honest-secure-element assumption discussed in {{PAPER}}.
 
 Choice of the Tom curve.
-: Using the Tom curve introduces a discrete-log assumption over an additional,
-  less-studied curve.  Deployments unwilling to take this assumption should use
-  a circuit-based realization instead (out of scope here).  `(G_t, H_t)` and
-  all credential-curve generators MUST be nothing-up-my-sleeve / verifiably
-  random so no party knows discrete-log relations among them.
+: Using the Tom curve introduces a discrete-log assumption over an additional, less-studied curve.
+  Deployments unwilling to take this assumption should use a circuit-based realization instead (out of scope here).
+  `(G_t, H_t)` and all credential-curve generators MUST be nothing-up-my-sleeve / verifiably random so no party knows discrete-log relations among them.
 
 Non-degeneracy.
-: The point-addition proof is sound only under `P_1 != +-P_2` and
-  `P_1, P_2 != identity`.  The callers in this document guarantee these: `SM`
-  excludes the degenerate scalars when forming its auxiliary instances (per
-  {{CDLS}}), and the `group` reduction fixes the operands structurally.  Other
-  callers MUST establish these preconditions independently.
+: The point-addition proof is sound only under `P_1 != +-P_2` and `P_1, P_2 != identity`.
+  The callers in this document guarantee these: `SM` excludes the degenerate scalars when forming its auxiliary instances (per {{CDLS}}), and the `group` reduction fixes the operands structurally.
+  Other callers MUST establish these preconditions independently.
 
 Post-quantum.
-: As with all discrete-log Sigma protocols, these proofs provide
-  (statistical) zero-knowledge against unbounded adversaries but are not
-  sound against quantum adversaries.
+: As with all discrete-log Sigma protocols, these proofs provide (statistical) zero-knowledge against unbounded adversaries but are not sound against quantum adversaries.
 
 # IANA Considerations
 
-This document has no IANA actions of its own.  It defines the construction
-behind the `ecdsa-p256-db` sub-proof algorithm whose registration is requested
-by {{MODULAR-BBS}} in that document's sub-proof algorithm registry; this
-document does not create a new registry.
+This document has no IANA actions of its own.
+It defines the construction behind the `ecdsa-p256-db` sub-proof algorithm whose registration is requested by {{MODULAR-BBS}} in that document's sub-proof algorithm registry; this document does not create a new registry.
 
 --- back
 
 # Note on Authorship
 {:numbered="false"}
 
-The authors are listed in alphabetical order by surname and contributed
-equally to this work; the ordering does not denote a lead or corresponding
-author.  The document name uses the authors' combined initials ("cllz") rather
-than any single surname.  The "et al." form that appears in running headers is
-an artifact of the RFC document format and carries no such connotation here.
+The authors are listed in alphabetical order by surname and contributed equally to this work; the ordering does not denote a lead or corresponding author.
+The document name uses the authors' combined initials ("cllz") rather than any single surname.
+The "et al." form that appears in running headers is an artifact of the RFC document format and carries no such connotation here.
 
 # Acknowledgments
 {:numbered="false"}
 
 This specification is derived from the construction and analysis in {{PAPER}}.
-The Schnorr-type proof of possession formalizes and optimizes the
-ECDSA-device-binding approach of {{UBIQUE}} and the CDLS / zkAttest proofs of
-{{CDLS}} and {{ZKATTEST}}, composed through the modular credential framework of
-{{LSZ}} and the reductions-of-knowledge framework of {{RoK}}.
+The Schnorr-type proof of possession formalizes and optimizes the ECDSA-device-binding approach of {{UBIQUE}} and the CDLS / zkAttest proofs of {{CDLS}} and {{ZKATTEST}}, composed through the modular credential framework of {{LSZ}} and the reductions-of-knowledge framework of {{RoK}}.
