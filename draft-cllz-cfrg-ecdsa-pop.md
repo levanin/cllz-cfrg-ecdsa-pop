@@ -121,11 +121,14 @@ informative:
       CiC: 2025
   LSZ:
     title: "Vision: A Modular Framework for Anonymous Credential Systems"
+    target: https://doi.org/10.1007/978-3-032-19567-8_3
     author:
       - name: Anja Lehmann
       - name: Andrey Sidorenko
       - name: Alexandros Zacharakis
-    date: 2025
+    date: 2026
+    seriesinfo:
+      SSR: 2025
   UBIQUE:
     title: "BBS+ Device Binding via ECDSA (EUDI Innovation Competition prototype)"
     author:
@@ -313,9 +316,10 @@ composition of reductions (see {{RoK}}):
 PoP = ( SM x PA ) o group o transfer
 ~~~
 
-Each step is an honest-verifier zero-knowledge, public-coin reduction; their
-composition is an honest-verifier zero-knowledge proof of knowledge for
-(Eq. POP), made non-interactive via Fiat-Shamir ({{fiat-shamir}}).
+Each step is an honest-verifier zero-knowledge, public-coin reduction.
+Unrolled, their composition is a five-round (i.e. five-message) public-coin interactive protocol between prover and verifier where the commitment/response flows of the underlying protocols interleave into five moves. This interactive protocol is then made non-interactive by applying the Fiat-Shamir
+transform ({{fiat-shamir}}), deriving every verifier challenge from the
+transcript; the exact per-challenge transcript inputs remain to be specified (see {{transfer}} and {{fiat-shamir}}). The result is a non-interactive zero-knowledge proof of knowledge for (Eq. POP).
 
 # Parameters and Encodings
 
@@ -331,8 +335,7 @@ An instantiation of this PoP fixes:
   its generators, as fixed by the credential profile (e.g. {{MODULAR-BBS}}).
 
 The generators `(G_t, H_t)` MUST be sampled verifiably (e.g., via
-hash-to-curve from fixed domain-separation strings) so that no party knows
-their relative discrete logarithm.
+hash-to-curve from fixed domain-separation strings) so that no party knows their relative discrete logarithm. The concrete instantiation of such parameters should be resolved by future standardisation efforts.
 
 ## Committing to a P-256 Public Key {#encoding}
 
@@ -341,18 +344,18 @@ credential-layer commitment commits to scalars of the credential curve (`F_s`),
 each coordinate is encoded as a fixed number of limbs in `F_s`, and the limbs
 are committed with Pedersen.
 
-This document adopts, for interoperability with {{MODULAR-BBS}}, the
-`ecdsa-p256-limb4-64` encoding: each of `x` and `y` is split into four 64-bit
-little-endian limbs
+This document adopts the approach of {{PAPER}}, where each of `x` and `y` is split into two 128-bit little-endian limbs, i.e.
 
 ~~~
-x = x_0 + 2^64 * x_1 + 2^128 * x_2 + 2^192 * x_3,   0 <= x_i < 2^64
+x = x_0 + 2^128 * x_1,   0 <= x_i < 2^128
 ~~~
 
-and likewise for `y`, occupying eight credential-message slots in total
-(indices 0..7).  Other limb sizes (e.g. two 128-bit limbs per coordinate, as in
-{{PAPER}}) MAY be used by other profiles; the proofs below are agnostic to the
-choice.
+and likewise for `y`.  The modular BBS framework of {{MODULAR-BBS}} instead
+encodes the key as four 64-bit limbs (the `ecdsa-p256-limb4-64` key binding),
+an encoding it inherits from the modular credential framework of {{LSZ}}; this
+document opts for 128-bit limbs, which guarantee 112 bits of security for the
+transfer of {{transfer}} -- sufficient for this application.  The proofs below
+are agnostic to the choice (see {{transfer}}), but we opt for 128 bit limbs for improved efficiency.
 
 The credential layer is responsible, at issuance, for guaranteeing that
 (a) each limb lies in its declared range and (b) `(x, y)` is a valid P-256
@@ -361,12 +364,16 @@ point.  This PoP assumes those facts hold a priori and does not re-prove them.
 # Commitment Transfer {#transfer}
 
 The PoP operates over the Tom curve, but the credential layer commits `Q` over
-the credential curve.  The transfer reduction re-expresses the commitment to
-`Q` as commitments over Tom-256, preserving the committed value.
+the credential curve.  The transfer step re-expresses the commitment to `Q` as
+commitments over Tom-256, preserving the committed value.  Following {{PAPER}},
+it is structured as a *reduction of knowledge* ({{RoK}}): a public-coin
+interactive reduction that maps a committed statement under the credential-curve
+scheme to the *same* statement under the Tom-curve scheme, after which the
+curve-operation proofs of {{rok-group}} take over.
 
 Let `Commit` be the credential-curve commitment scheme and `Commit~` the
 Tom-curve scheme.  Generically, for each committed value `m_i` with
-credential-curve commitment `C_i`, the prover sends a fresh Tom commitment
+credential-curve commitment `C_i`, the prover produces a fresh Tom commitment
 `C~_i = Commit~(m_i; rho~_i)` and proves, with a public-coin proof of knowledge
 `EQ`, the relation
 
@@ -382,21 +389,83 @@ in parallel.
 For Pedersen-to-Pedersen transfer across the credential and Tom curves, `EQ`
 MUST be instantiated with a cross-group equality-of-opening proof for
 small-integer messages (the technique of {{OKMZ}}); the limb encoding of
-{{encoding}} guarantees the small-message precondition.  By the homomorphic
-property of Pedersen commitments, the per-limb Tom commitments are summed with
-the appropriate powers of `2^64` to recover the single-scalar coordinate
-commitments
+{{encoding}} guarantees the small-message precondition.
+
+## Protocol
+
+Unrolling the reduction of {{PAPER}} with `EQ` instantiated by the cross-group
+proof of {{OKMZ}} gives the following per-limb, public-coin protocol.  It is run
+in parallel over all committed limbs, sharing a single challenge `c`.  Write
+`(g, h)` for the credential-curve Pedersen generators and `(G_t, H_t)` for the
+Tom generators ({{encoding}}), and let `b_m`, `b_c`, `b_f` be the {{OKMZ}}
+message-bound, challenge, and slack widths, with
+
+~~~
+b_m + b_c + b_f  <  log2( min(|F_s|, |F_q|) )
+~~~
+
+so that every value below stays an integer in both scalar fields (no
+wraparound).
+
+~~~
+Prover P                                  Verifier V
+  inputs: m_i, rho_i      (0 <= m_i < 2^b_m)   inputs: C_i = m_i*g + rho_i*h
+
+  # 1. new commitment: reduce the statement to Tom
+  rho~_i <- F_q
+  C~_i = m_i*G_t + rho~_i*H_t
+                 ---            C~_i            --->
+
+  # 2. announcement: bounded masks in both groups
+  k_i  <- { 0, ..., 2^(b_m + b_c + b_f) - 1 }
+  t_i  <- F_s;   t~_i <- F_q
+  A_i  = k_i*g   + t_i*h
+  A~_i = k_i*G_t + t~_i*H_t
+                 ---         A_i, A~_i          --->
+                 <---   c <- {0,...,2^b_c - 1}  ---
+  # 3. bounded response (z_i over the integers)
+  z_i  = k_i  + c*m_i
+  s_i  = t_i  + c*rho_i        (in F_s)
+  s~_i = t~_i + c*rho~_i       (in F_q)
+  if z_i outside the admissible range R: abort and restart
+                 ---       z_i, s_i, s~_i       --->
+
+Verifier checks (per limb i):
+  (1)  z_i*g   + s_i*h    == A_i  + c*C_i        # opening, credential curve
+  (2)  z_i*G_t + s~_i*H_t == A~_i + c*C~_i       # opening, Tom curve
+  (3)  z_i in R                                  # range bound: no wraparound
+~~~
+
+The abort in step 3 is the rejection sampling of {{OKMZ}}; the admissible range
+`R` and the exact bound widths are those of {{OKMZ}}, to which implementations
+MUST conform.  On acceptance, both parties use Pedersen homomorphism to fold the
+per-limb Tom commitments `C~_i`, weighted by the appropriate powers of `2^b_m`,
+into the two single-scalar coordinate commitments
 
 ~~~
 C_x = Commit~(x; rho_x),    C_y = Commit~(y; rho_y)
 ~~~
 
-These two commitments, together denoted `C_Q`, are the output of this step and
-the committed form of `Q` used by the remaining proofs.
+These two commitments, together denoted `C_Q`, are the output statement of the
+reduction and the committed form of `Q` used by the remaining proofs.
 
-> Note: The {{OKMZ}} instantiation with 128-bit limbs achieves 112-bit
-> security; profiles with stricter requirements SHOULD adjust the limb size
-> and repetition accordingly.
+This document adopts 128-bit limbs (`b_m = 128`) for the transfer, as in
+{{PAPER}}: this minimizes the number of cross-group instances, and with the
+{{OKMZ}} parameters achieves 112-bit security.  The 64-bit limbs of the
+`ecdsa-p256-limb4-64` encoding ({{encoding}}) work equally well -- they leave
+more headroom below `min(|F_s|, |F_q|)` and so can reach higher soundness -- at
+the cost of twice as many cross-group instances; profiles MAY use either, and
+profiles with stricter requirements SHOULD adjust the limb size and repetition
+accordingly.
+
+The exact Fiat-Shamir binding for this transfer is not yet fixed by this
+document.  In particular, the precise inputs absorbed before the challenge `c`
+-- the domain separator, the credential- and Tom-curve commitments `C_i`,
+`C~_i`, the announcements `A_i`, `A~_i`, and the {{OKMZ}} bound parameters --
+remain to be specified, and MUST be pinned down (consistent with {{FIAT-SHAMIR}}
+and {{fiat-shamir}}) before this profile is interoperable.  The move structure
+above is normative; its exact byte-level Fiat-Shamir inputs are deferred to a
+future revision.
 
 # Reduction to Curve Operations {#rok-group}
 
