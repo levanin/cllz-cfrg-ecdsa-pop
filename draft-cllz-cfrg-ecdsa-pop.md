@@ -134,6 +134,18 @@ informative:
     author:
       - org: Ubique
     date: 2024
+  EUDI-ARF:
+    title: "EU Digital Identity Wallet -- Architecture and Reference Framework"
+    target: https://eudi.dev/2.4.0/
+    author:
+      - org: European Commission
+    date: 2026
+  DEROSA:
+    title: "Discussion comment on Cryptographers' Feedback on the EU Digital Identity's ARF #211"
+    target: https://github.com/eu-digital-identity-wallet/eudi-doc-architecture-and-reference-framework/discussions/211/#discussioncomment-9882388
+    author:
+      - name: Paolo De Rosa
+    date: 2024
   AGENDA126:
     title: "Crypto Forum Research Group (CFRG) Agenda, IETF 126"
     target: https://datatracker.ietf.org/doc/agenda-126-cfrg/
@@ -154,10 +166,12 @@ SNARK-based realizations of the same relation are out of scope.
 
 Anonymous credentials enable privacy-preserving authentication: a holder presents an issuer-attested credential to a relying party while revealing only the minimum necessary information and while remaining unlinkable across presentations.
 BBS signatures {{BBS}} are a leading basis for such credentials and are being adopted in several standardization efforts.
+Ongoing standardisation efforts are of particular relevance to the European Union Digital Identity (EUDI) wallet {{EUDI-ARF}}, whose architecture mandates device binding to a secure element.
 
 A central requirement for credentials used in digital-identity deployments is *non-transferability*, usually achieved by *device binding*: the credential is bound to a key held in a secure element (SE) on the user's device, and at presentation time the holder produces a fresh signature -- a proof of possession (PoP) -- under the corresponding secret key, which never leaves the SE.
-Consumer-device secure elements are, in practice, restricted to ECDSA over P-256 and do not expose the pairing-friendly operations required by native anonymous-credential device binding.
-This document addresses that gap: it specifies how to prove possession of an ECDSA signature under a *committed* device public key, so that ECDSA device binding can be composed with a pairing-based credential layer such as BBS.
+Consumer-device secure elements are, in practice, restricted to ECDSA over P-256 and do not expose the pairing-friendly operations required by native anonymous-credential device binding. The lack of an efficient and robust device-binding mechanism for anonymous credentials on legacy hardware was a key reason such credentials were not used in the initial EUDI deployment, which instead relies on batch-issued one-time-use credentials {{DEROSA}}.
+
+This document addresses that gap: it specifies how to prove possession of an ECDSA signature under a *committed* device public key, so that ECDSA device binding can be composed with a pairing-based credential layer such as BBS. The solution we propose is based on sigma protocols, and provides a robust, well understood approach that avoids implementation and interoperability challenges posed by circuit-based constructions.
 
 ## Scope
 
