@@ -141,9 +141,9 @@ Table of Contents
    possession of an ECDSA signature under a _committed_ device public
    key, so that ECDSA device binding can be composed with a pairing-
    based credential layer such as BBS.  The solution we propose is based
-   on sigma protocols, and provides a robust, well understood approach
-   that avoids implementation and interoperability challenges posed by
-   circuit-based constructions.
+   on Schnorr-type proofs, and provides a robust, well understood
+   approach that avoids implementation and interoperability challenges
+   posed by circuit-based constructions.
 
 1.1.  Scope
 
