@@ -1070,7 +1070,7 @@ svg {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Celi, et al.</td>
-<td class="center">Expires 31 December 2026</td>
+<td class="center">Expires 1 January 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1083,12 +1083,12 @@ svg {
 <dd class="internet-draft">draft-cllz-cfrg-ecdsa-pop-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-06-29" class="published">29 June 2026</time>
+<time datetime="2026-06-30" class="published">30 June 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2026-12-31">31 December 2026</time></dd>
+<dd class="expires"><time datetime="2027-01-01">1 January 2027</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1163,7 +1163,7 @@ realizations of the same relation are out of scope.<a href="#section-abstract-2"
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 31 December 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 1 January 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1219,6 +1219,11 @@ realizations of the same relation are out of scope.<a href="#section-abstract-2"
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
             <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-commitment-transfer" class="internal xref">Commitment Transfer</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-protocol" class="internal xref">Protocol</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
             <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-reduction-to-curve-operatio" class="internal xref">Reduction to Curve Operations</a></p>
@@ -1233,7 +1238,7 @@ realizations of the same relation are out of scope.<a href="#section-abstract-2"
                 <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-affine-addition-constraints" class="internal xref">Affine Addition Constraints</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
-                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-protocol" class="internal xref">Protocol</a></p>
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-protocol-2" class="internal xref">Protocol</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
                 <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-expressing-pa-via-the-sigma" class="internal xref">Expressing PA via the Sigma-Protocols Interface</a></p>
@@ -1466,9 +1471,10 @@ composition of reductions (see <span>[<a href="#RoK" class="cite xref">RoK</a>]<
 PoP = ( SM x PA ) o group o transfer
 </pre><a href="#section-3-12" class="pilcrow">¶</a>
 </div>
-<p id="section-3-13">Each step is an honest-verifier zero-knowledge, public-coin reduction; their
-composition is an honest-verifier zero-knowledge proof of knowledge for
-(Eq. POP), made non-interactive via Fiat-Shamir (<a href="#fiat-shamir" class="auto internal xref">Section 9</a>).<a href="#section-3-13" class="pilcrow">¶</a></p>
+<p id="section-3-13">Each step is an honest-verifier zero-knowledge, public-coin reduction.
+Unrolled, their composition is a five-round (i.e. five-message) public-coin interactive protocol between prover and verifier where the commitment/response flows of the underlying protocols interleave into five moves. This interactive protocol is then made non-interactive by applying the Fiat-Shamir
+transform (<a href="#fiat-shamir" class="auto internal xref">Section 9</a>), deriving every verifier challenge from the
+transcript; the exact per-challenge transcript inputs remain to be specified (see <a href="#transfer" class="auto internal xref">Section 5</a> and <a href="#fiat-shamir" class="auto internal xref">Section 9</a>). The result is a non-interactive zero-knowledge proof of knowledge for (Eq. POP).<a href="#section-3-13" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="parameters-and-encodings">
@@ -1497,8 +1503,7 @@ its generators, as fixed by the credential profile (e.g. <span>[<a href="#MODULA
 </li>
         </ul>
 <p id="section-4.1-3">The generators <code>(G_t, H_t)</code> <span class="bcp14">MUST</span> be sampled verifiably (e.g., via
-hash-to-curve from fixed domain-separation strings) so that no party knows
-their relative discrete logarithm.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
+hash-to-curve from fixed domain-separation strings) so that no party knows their relative discrete logarithm. The concrete instantiation of such parameters should be resolved by future standardisation efforts.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="encoding">
@@ -1510,18 +1515,18 @@ their relative discrete logarithm.<a href="#section-4.1-3" class="pilcrow">¶</a
 credential-layer commitment commits to scalars of the credential curve (<code>F_s</code>),
 each coordinate is encoded as a fixed number of limbs in <code>F_s</code>, and the limbs
 are committed with Pedersen.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
-<p id="section-4.2-2">This document adopts, for interoperability with <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span>, the
-<code>ecdsa-p256-limb4-64</code> encoding: each of <code>x</code> and <code>y</code> is split into four 64-bit
-little-endian limbs<a href="#section-4.2-2" class="pilcrow">¶</a></p>
+<p id="section-4.2-2">This document adopts the approach of <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>, where each of <code>x</code> and <code>y</code> is split into two 128-bit little-endian limbs, i.e.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-4.2-3">
 <pre>
-x = x_0 + 2^64 * x_1 + 2^128 * x_2 + 2^192 * x_3,   0 &lt;= x_i &lt; 2^64
+x = x_0 + 2^128 * x_1,   0 &lt;= x_i &lt; 2^128
 </pre><a href="#section-4.2-3" class="pilcrow">¶</a>
 </div>
-<p id="section-4.2-4">and likewise for <code>y</code>, occupying eight credential-message slots in total
-(indices 0..7).  Other limb sizes (e.g. two 128-bit limbs per coordinate, as in
-<span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>) <span class="bcp14">MAY</span> be used by other profiles; the proofs below are agnostic to the
-choice.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
+<p id="section-4.2-4">and likewise for <code>y</code>.  The modular BBS framework of <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span> instead
+encodes the key as four 64-bit limbs (the <code>ecdsa-p256-limb4-64</code> key binding),
+an encoding it inherits from the modular credential framework of <span>[<a href="#LSZ" class="cite xref">LSZ</a>]</span>; this
+document opts for 128-bit limbs, which guarantee 112 bits of security for the
+transfer of <a href="#transfer" class="auto internal xref">Section 5</a> -- sufficient for this application.  The proofs below
+are agnostic to the choice (see <a href="#transfer" class="auto internal xref">Section 5</a>), but we opt for 128 bit limbs for improved efficiency.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
 <p id="section-4.2-5">The credential layer is responsible, at issuance, for guaranteeing that
 (a) each limb lies in its declared range and (b) <code>(x, y)</code> is a valid P-256
 point.  This PoP assumes those facts hold a priori and does not re-prove them.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
@@ -1535,11 +1540,15 @@ point.  This PoP assumes those facts hold a priori and does not re-prove them.<a
 <a href="#section-5" class="section-number selfRef">5. </a><a href="#name-commitment-transfer" class="section-name selfRef">Commitment Transfer</a>
       </h2>
 <p id="section-5-1">The PoP operates over the Tom curve, but the credential layer commits <code>Q</code> over
-the credential curve.  The transfer reduction re-expresses the commitment to
-<code>Q</code> as commitments over Tom-256, preserving the committed value.<a href="#section-5-1" class="pilcrow">¶</a></p>
+the credential curve.  The transfer step re-expresses the commitment to <code>Q</code> as
+commitments over Tom-256, preserving the committed value.  Following <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>,
+it is structured as a <em>reduction of knowledge</em> (<span>[<a href="#RoK" class="cite xref">RoK</a>]</span>): a public-coin
+interactive reduction that maps a committed statement under the credential-curve
+scheme to the <em>same</em> statement under the Tom-curve scheme, after which the
+curve-operation proofs of <a href="#rok-group" class="auto internal xref">Section 6</a> take over.<a href="#section-5-1" class="pilcrow">¶</a></p>
 <p id="section-5-2">Let <code>Commit</code> be the credential-curve commitment scheme and <code>Commit~</code> the
 Tom-curve scheme.  Generically, for each committed value <code>m_i</code> with
-credential-curve commitment <code>C_i</code>, the prover sends a fresh Tom commitment
+credential-curve commitment <code>C_i</code>, the prover produces a fresh Tom commitment
 <code>C~_i = Commit~(m_i; rho~_i)</code> and proves, with a public-coin proof of knowledge
 <code>EQ</code>, the relation<a href="#section-5-2" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-5-3">
@@ -1554,24 +1563,85 @@ in parallel.<a href="#section-5-4" class="pilcrow">¶</a></p>
 <p id="section-5-5">For Pedersen-to-Pedersen transfer across the credential and Tom curves, <code>EQ</code>
         <span class="bcp14">MUST</span> be instantiated with a cross-group equality-of-opening proof for
 small-integer messages (the technique of <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span>); the limb encoding of
-<a href="#encoding" class="auto internal xref">Section 4.2</a> guarantees the small-message precondition.  By the homomorphic
-property of Pedersen commitments, the per-limb Tom commitments are summed with
-the appropriate powers of <code>2^64</code> to recover the single-scalar coordinate
-commitments<a href="#section-5-5" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-5-6">
+<a href="#encoding" class="auto internal xref">Section 4.2</a> guarantees the small-message precondition.<a href="#section-5-5" class="pilcrow">¶</a></p>
+<div id="protocol">
+<section id="section-5.1">
+        <h3 id="name-protocol">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-protocol" class="section-name selfRef">Protocol</a>
+        </h3>
+<p id="section-5.1-1">Unrolling the reduction of <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span> with <code>EQ</code> instantiated by the cross-group
+proof of <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> gives the following per-limb, public-coin protocol.  It is run
+in parallel over all committed limbs, sharing a single challenge <code>c</code>.  Write
+<code>(g, h)</code> for the credential-curve Pedersen generators and <code>(G_t, H_t)</code> for the
+Tom generators (<a href="#encoding" class="auto internal xref">Section 4.2</a>), and let <code>b_m</code>, <code>b_c</code>, <code>b_f</code> be the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span>
+message-bound, challenge, and slack widths, with<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5.1-2">
+<pre>
+b_m + b_c + b_f  &lt;  log2( min(|F_s|, |F_q|) )
+</pre><a href="#section-5.1-2" class="pilcrow">¶</a>
+</div>
+<p id="section-5.1-3">so that every value below stays an integer in both scalar fields (no
+wraparound).<a href="#section-5.1-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5.1-4">
+<pre>
+Prover P                                  Verifier V
+  inputs: m_i, rho_i      (0 &lt;= m_i &lt; 2^b_m)   inputs: C_i = m_i*g + rho_i*h
+
+  # 1. new commitment: reduce the statement to Tom
+  rho~_i &lt;- F_q
+  C~_i = m_i*G_t + rho~_i*H_t
+                 ---            C~_i            ---&gt;
+
+  # 2. announcement: bounded masks in both groups
+  k_i  &lt;- { 0, ..., 2^(b_m + b_c + b_f) - 1 }
+  t_i  &lt;- F_s;   t~_i &lt;- F_q
+  A_i  = k_i*g   + t_i*h
+  A~_i = k_i*G_t + t~_i*H_t
+                 ---         A_i, A~_i          ---&gt;
+                 &lt;---   c &lt;- {0,...,2^b_c - 1}  ---
+  # 3. bounded response (z_i over the integers)
+  z_i  = k_i  + c*m_i
+  s_i  = t_i  + c*rho_i        (in F_s)
+  s~_i = t~_i + c*rho~_i       (in F_q)
+  if z_i outside the admissible range R: abort and restart
+                 ---       z_i, s_i, s~_i       ---&gt;
+
+Verifier checks (per limb i):
+  (1)  z_i*g   + s_i*h    == A_i  + c*C_i        # opening, credential curve
+  (2)  z_i*G_t + s~_i*H_t == A~_i + c*C~_i       # opening, Tom curve
+  (3)  z_i in R                                  # range bound: no wraparound
+</pre><a href="#section-5.1-4" class="pilcrow">¶</a>
+</div>
+<p id="section-5.1-5">The abort in step 3 is the rejection sampling of <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span>; the admissible range
+<code>R</code> and the exact bound widths are those of <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span>, to which implementations
+<span class="bcp14">MUST</span> conform.  On acceptance, both parties use Pedersen homomorphism to fold the
+per-limb Tom commitments <code>C~_i</code>, weighted by the appropriate powers of <code>2^b_m</code>,
+into the two single-scalar coordinate commitments<a href="#section-5.1-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5.1-6">
 <pre>
 C_x = Commit~(x; rho_x),    C_y = Commit~(y; rho_y)
-</pre><a href="#section-5-6" class="pilcrow">¶</a>
+</pre><a href="#section-5.1-6" class="pilcrow">¶</a>
 </div>
-<p id="section-5-7">These two commitments, together denoted <code>C_Q</code>, are the output of this step and
-the committed form of <code>Q</code> used by the remaining proofs.<a href="#section-5-7" class="pilcrow">¶</a></p>
-<ul class="normal ulEmpty">
-<li class="normal ulEmpty" id="section-5-8.1">
-          <p id="section-5-8.1.1">Note: The <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> instantiation with 128-bit limbs achieves 112-bit
-security; profiles with stricter requirements <span class="bcp14">SHOULD</span> adjust the limb size
-and repetition accordingly.<a href="#section-5-8.1.1" class="pilcrow">¶</a></p>
-</li>
-      </ul>
+<p id="section-5.1-7">These two commitments, together denoted <code>C_Q</code>, are the output statement of the
+reduction and the committed form of <code>Q</code> used by the remaining proofs.<a href="#section-5.1-7" class="pilcrow">¶</a></p>
+<p id="section-5.1-8">This document adopts 128-bit limbs (<code>b_m = 128</code>) for the transfer, as in
+<span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>: this minimizes the number of cross-group instances, and with the
+<span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> parameters achieves 112-bit security.  The 64-bit limbs of the
+<code>ecdsa-p256-limb4-64</code> encoding (<a href="#encoding" class="auto internal xref">Section 4.2</a>) work equally well -- they leave
+more headroom below <code>min(|F_s|, |F_q|)</code> and so can reach higher soundness -- at
+the cost of twice as many cross-group instances; profiles <span class="bcp14">MAY</span> use either, and
+profiles with stricter requirements <span class="bcp14">SHOULD</span> adjust the limb size and repetition
+accordingly.<a href="#section-5.1-8" class="pilcrow">¶</a></p>
+<p id="section-5.1-9">The exact Fiat-Shamir binding for this transfer is not yet fixed by this
+document.  In particular, the precise inputs absorbed before the challenge <code>c</code>
+-- the domain separator, the credential- and Tom-curve commitments <code>C_i</code>,
+<code>C~_i</code>, the announcements <code>A_i</code>, <code>A~_i</code>, and the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> bound parameters --
+remain to be specified, and <span class="bcp14">MUST</span> be pinned down (consistent with <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span>
+and <a href="#fiat-shamir" class="auto internal xref">Section 9</a>) before this profile is interoperable.  The move structure
+above is normative; its exact byte-level Fiat-Shamir inputs are deferred to a
+future revision.<a href="#section-5.1-9" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="rok-group">
@@ -1697,10 +1767,10 @@ knowledge of openings of the coordinate commitments and of a commitment to
 <code>tau</code> satisfying (C1)-(C3).<a href="#section-8.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="protocol">
+<div id="protocol-1">
 <section id="section-8.2">
-        <h3 id="name-protocol">
-<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-protocol" class="section-name selfRef">Protocol</a>
+        <h3 id="name-protocol-2">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-protocol-2" class="section-name selfRef">Protocol</a>
         </h3>
 <p id="section-8.2-1">Both parties first recompute, by Pedersen homomorphism, the derived
 commitments<a href="#section-8.2-1" class="pilcrow">¶</a></p>
@@ -2031,7 +2101,7 @@ document does not create a new registry.<a href="#section-12-1" class="pilcrow">
 <dd class="break"></dd>
 <dt id="LSZ">[LSZ]</dt>
         <dd>
-<span class="refAuthor">Lehmann, A.</span>, <span class="refAuthor">Sidorenko, A.</span>, and <span class="refAuthor">A. Zacharakis</span>, <span class="refTitle">"Vision: A Modular Framework for Anonymous Credential Systems"</span>, <time datetime="2025" class="refDate">2025</time>. </dd>
+<span class="refAuthor">Lehmann, A.</span>, <span class="refAuthor">Sidorenko, A.</span>, and <span class="refAuthor">A. Zacharakis</span>, <span class="refTitle">"Vision: A Modular Framework for Anonymous Credential Systems"</span>, <span class="seriesInfo">SSR 2025</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://doi.org/10.1007/978-3-032-19567-8_3">https://doi.org/10.1007/978-3-032-19567-8_3</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="OKMZ">[OKMZ]</dt>
         <dd>
