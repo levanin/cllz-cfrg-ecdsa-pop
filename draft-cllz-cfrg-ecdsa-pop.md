@@ -317,9 +317,7 @@ PoP = ( SM x PA ) o group o transfer
 ~~~
 
 Each step is an honest-verifier zero-knowledge, public-coin reduction.
-Unrolled, their composition is a five-round (i.e. five-message) public-coin interactive protocol between prover and verifier where the commitment/response flows of the underlying protocols interleave into five moves. This interactive protocol is then made non-interactive by applying the Fiat-Shamir
-transform ({{fiat-shamir}}), deriving every verifier challenge from the
-transcript; the exact per-challenge transcript inputs remain to be specified (see {{transfer}} and {{fiat-shamir}}). The result is a non-interactive zero-knowledge proof of knowledge for (Eq. POP).
+Unrolled, their composition is a five-round (i.e. five-message) public-coin interactive protocol between prover and verifier where the commitment/response flows of the underlying protocols interleave into five moves. This interactive protocol is then made non-interactive by applying the Fiat-Shamir transform ({{fiat-shamir}}), deriving every verifier challenge from the transcript; the exact per-challenge transcript inputs remain to be specified (see {{transfer}} and {{fiat-shamir}}). The result is a non-interactive zero-knowledge proof of knowledge for (Eq. POP).
 
 # Parameters and Encodings
 
