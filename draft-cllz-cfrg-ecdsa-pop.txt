@@ -118,7 +118,10 @@ Table of Contents
    while revealing only the minimum necessary information and while
    remaining unlinkable across presentations.  BBS signatures [BBS] are
    a leading basis for such credentials and are being adopted in several
-   standardization efforts.
+   standardization efforts.  Ongoing standardisation efforts are of
+   particular relevance to the European Union Digital Identity (EUDI)
+   wallet [EUDI-ARF], whose architecture mandates device binding to a
+   secure element.
 
    A central requirement for credentials used in digital-identity
    deployments is _non-transferability_, usually achieved by _device
@@ -128,10 +131,19 @@ Table of Contents
    the corresponding secret key, which never leaves the SE.  Consumer-
    device secure elements are, in practice, restricted to ECDSA over
    P-256 and do not expose the pairing-friendly operations required by
-   native anonymous-credential device binding.  This document addresses
-   that gap: it specifies how to prove possession of an ECDSA signature
-   under a _committed_ device public key, so that ECDSA device binding
-   can be composed with a pairing-based credential layer such as BBS.
+   native anonymous-credential device binding.  The lack of an efficient
+   and robust device-binding mechanism for anonymous credentials on
+   legacy hardware was a key reason such credentials were not used in
+   the initial EUDI deployment, which instead relies on batch-issued
+   one-time-use credentials [DEROSA].
+
+   This document addresses that gap: it specifies how to prove
+   possession of an ECDSA signature under a _committed_ device public
+   key, so that ECDSA device binding can be composed with a pairing-
+   based credential layer such as BBS.  The solution we propose is based
+   on sigma protocols, and provides a robust, well understood approach
+   that avoids implementation and interoperability challenges posed by
+   circuit-based constructions.
 
 1.1.  Scope
 
@@ -837,6 +849,16 @@ Verifier checks (per limb i):
    [CDLS]     Celi, S., Levin, S., and J. Rowell, "CDLS: Proving
               Knowledge of Committed Discrete Logarithms with
               Soundness", AFRICACRYPT 2024, 2024.
+
+   [DEROSA]   Rosa, P. D., "Discussion comment on Cryptographers'
+              Feedback on the EU Digital Identity's ARF #211", 2024,
+              <https://github.com/eu-digital-identity-wallet/eudi-doc-
+              architecture-and-reference-framework/
+              discussions/211/#discussioncomment-9882388>.
+
+   [EUDI-ARF] European Commission, "EU Digital Identity Wallet --
+              Architecture and Reference Framework", 2026,
+              <https://eudi.dev/2.4.0/>.
 
    [LSZ]      Lehmann, A., Sidorenko, A., and A. Zacharakis, "Vision: A
               Modular Framework for Anonymous Credential Systems",
