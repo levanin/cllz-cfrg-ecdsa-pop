@@ -101,11 +101,12 @@ Table of Contents
      8.3.  Expressing PA via the Sigma-Protocols Interface
    9.  Non-Interactive Proofs (Fiat-Shamir)
    10. Integration with Modular BBS
-   11. Security Considerations
-   12. IANA Considerations
-   13. References
-     13.1.  Normative References
-     13.2.  Informative References
+   11. Implementation Status
+   12. Security Considerations
+   13. IANA Considerations
+   14. References
+     14.1.  Normative References
+     14.2.  Informative References
    Note on Authorship
    Acknowledgments
    Authors' Addresses
@@ -206,7 +207,7 @@ Table of Contents
       assumption in G.
 
    Throughout, lowercase letters denote scalars and uppercase letters
-   denote group elements.  x*P denotes scalar multiplication and A + B
+   denote group elements. x*P denotes scalar multiplication and A + B
    denotes group addition.  H(.) is a hash into F_np (SHA-256 reduced
    mod n_p, as in ECDSA), and F: G_p -> F_np is the ECDSA conversion
    function mapping a point to the integer reduction mod n_p of its
@@ -449,7 +450,7 @@ Verifier checks (per limb i):
        Commit~(Z; rho_Z) (a Tom commitment to the P-256 point Z).
 
    2.  Both parties compute C_H = Commit~(Hpt; 0), the (deterministic,
-       zero- randomness) commitment to the public point Hpt.
+       zero-randomness) commitment to the public point Hpt.
 
    3.  The reduction outputs two statements:
 
@@ -692,13 +693,37 @@ Verifier checks (per limb i):
    can expose a Pedersen commitment to the device public key over a
    curve supported by the transfer of Section 5 can use this sub-proof.
 
-11.  Security Considerations
+11.  Implementation Status
+
+      Note to the RFC Editor: please remove this section before
+      publication.
+
+   A public, benchmarked reference implementation of the complete
+   Schnorr-type PoP specified here -- the ( SM x PA ) o group o transfer
+   composition of Section 3, including the [OKMZ] style commitment
+   transfer of Section 5 and the Tom-256 scalar-multiplication and
+   point-addition proofs -- is available at
+   https://github.com/alexandroszacharakis8/ecdsapop_t256ipa
+   (https://github.com/alexandroszacharakis8/ecdsapop_t256ipa).  It is
+   written in Rust and underlies the measurements reported in [PAPER].
+
+   [PAPER] gives three realizations of the same ECDSA-device-binding
+   relation -- the Schnorr-type proof specified in this document and two
+   circuit-based variants that are out of scope here (see Section 1.1)
+   -- and earlier variants of the Schnorr-type approach appear in
+   [UBIQUE].  The repository above is the specific implementation that
+   matches this document's Schnorr-type protocol and parameter choices.
+
+12.  Security Considerations
 
    Knowledge soundness.  The composed protocol is a proof of knowledge
       for (Eq. POP) (see [PAPER] for the analysis in the reductions-of-
       knowledge framework).  SM has soundness error 2^-lambda after
-      lambda parallel repetitions; PA has the negligible soundness error
-      of a Sigma protocol over F_q.  Soundness of the overall PoP
+      lambda parallel repetitions; PA has the 2^-lambda soundness error
+      of a Sigma protocol over F_q.  At the moment, we set lambda = 128,
+      but since the commitment linking protocol Section 5 achieves 112
+      bits of soundness for our proposed parameters, we may update to
+      lambda = 112 in future revisions.  Soundness of the overall PoP
       additionally relies on the binding of all Pedersen commitments,
       i.e. on the discrete-log assumption in both the credential curve
       and the Tom curve, and on the small-message soundness precondition
@@ -742,7 +767,7 @@ Verifier checks (per limb i):
       provide (statistical) zero-knowledge against unbounded adversaries
       but are not sound against quantum adversaries.
 
-12.  IANA Considerations
+13.  IANA Considerations
 
    This document has no IANA actions of its own.  It defines the
    construction behind the ecdsa-p256-db sub-proof algorithm whose
@@ -750,9 +775,9 @@ Verifier checks (per limb i):
    proof algorithm registry; this document does not create a new
    registry.
 
-13.  References
+14.  References
 
-13.1.  Normative References
+14.1.  Normative References
 
    [FIAT-SHAMIR]
               Orrù, M., "Fiat-Shamir Transformation", Work in Progress,
@@ -790,7 +815,7 @@ Verifier checks (per limb i):
               02, 2 March 2026, <https://datatracker.ietf.org/doc/html/
               draft-irtf-cfrg-sigma-protocols-02>.
 
-13.2.  Informative References
+14.2.  Informative References
 
    [AGENDA126]
               "Crypto Forum Research Group (CFRG) Agenda, IETF 126",
