@@ -7,18 +7,10 @@ docname: draft-cllz-cfrg-ecdsa-pop-latest
 submissiontype: IRTF
 number:
 date:
-consensus: true
 v: 3
 area: IRTF
 workgroup: Crypto Forum Research Group
-keyword:
- - zero knowledge
- - sigma protocol
- - ECDSA
- - proof of possession
- - device binding
- - anonymous credentials
- - BBS
+keyword: Internet-Draft
 venue:
   group: Crypto Forum
   type: Research Group
