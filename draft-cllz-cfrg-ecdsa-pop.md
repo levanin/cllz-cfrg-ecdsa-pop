@@ -564,7 +564,7 @@ The PoP itself is agnostic to the credential scheme: any scheme that can expose 
 
 > Note to the RFC Editor: please remove this section before publication.
 
-A public, benchmarked reference implementation of the complete Schnorr-type PoP specified here -- the `( SM x PA ) o group o transfer` composition of {{overview}}, including the {{OKMZ}} style commitment transfer of {{transfer}} and the Tom-256 scalar-multiplication and point-addition proofs -- is available at <https://github.com/alexandroszacharakis8/ecdsapop_t256ipa>.
+A public, benchmarked reference implementation of the complete Schnorr-type PoP specified here -- the `( SM x PA ) o group o transfer` composition of {{overview}}, including the {{OKMZ}} style commitment transfer of {{transfer}} and the Tom-256 scalar-multiplication and point-addition proofs -- is available at <https://github.com/hpicrypto/ecdsa_pops>.
 It is written in Rust and underlies the measurements reported in {{PAPER}}.
 
 {{PAPER}} gives three realizations of the same ECDSA-device-binding relation -- the Schnorr-type proof specified in this document and two circuit-based variants that are out of scope here (see {{scope}}) -- and earlier variants of the Schnorr-type approach appear in {{UBIQUE}}.
