@@ -151,11 +151,11 @@ informative:
 
 --- abstract
 
-This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature produced under a committed public key over the NIST P-256 (secp256r1) curve.
+This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature {{FIPS186-5}} produced under a committed public key over the NIST P-256 (secp256r1) curve.
 The PoP lets a credential holder prove, in zero knowledge, that it can produce a fresh ECDSA signature under a device public key without revealing that key, thereby providing device binding for privacy-preserving credentials whose presentation must remain unlinkable.
 
-The construction is built exclusively from Sigma protocols: it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
-It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to support compatibility with the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
+The construction is built exclusively from Sigma protocols {{SIGMA}} as it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
+It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to serve as the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
 SNARK-based realizations of the same relation are out of scope.
 
 --- middle
