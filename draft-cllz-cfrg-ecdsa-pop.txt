@@ -5,12 +5,12 @@
 Crypto Forum Research Group                                      S. Celi
 Internet-Draft                    Brave Software / University of Bristol
 Intended status: Informational                                A. Lehmann
-Expires: 1 January 2027                         Hasso Plattner Institute
+Expires: 2 January 2027                         Hasso Plattner Institute
                                                                 S. Levin
             Chalmers University of Technology / University of Gothenburg
                                                            A. Zacharakis
                                                 Hasso Plattner Institute
-                                                            30 June 2026
+                                                             1 July 2026
 
 
        Schnorr-Type Proofs of Possession for ECDSA Device Binding
@@ -32,9 +32,9 @@ Abstract
    each proved with a dedicated Sigma protocol over a companion ("Tom")
    curve whose scalar field equals the base field of P-256.  It is
    designed to be expressed using the interfaces of the CFRG Sigma-
-   protocols specification and to serve as the device-binding sub-proof
-   of the modular BBS / JSON Web Proofs construction.  SNARK-based
-   realizations of the same relation are out of scope.
+   protocols specification and to support compatibility with the device-
+   binding sub-proof of the modular BBS / JSON Web Proofs construction.
+   SNARK-based realizations of the same relation are out of scope.
 
 About This Document
 
@@ -68,7 +68,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 1 January 2027.
+   This Internet-Draft will expire on 2 January 2027.
 
 Copyright Notice
 
@@ -115,35 +115,40 @@ Table of Contents
 
    Anonymous credentials enable privacy-preserving authentication: a
    holder presents an issuer-attested credential to a relying party
-   while revealing only the minimum necessary information and while
-   remaining unlinkable across presentations.  BBS signatures [BBS] are
-   a leading basis for such credentials and are being adopted in several
-   standardization efforts.  Ongoing standardisation efforts are of
-   particular relevance to the European Union Digital Identity (EUDI)
-   wallet [EUDI-ARF], whose architecture mandates device binding to a
-   secure element.
+   while revealing only the minimum necessary information and remaining
+   unlinkable across presentations.  BBS signatures are a leading basis
+   for such credentials and are being adopted in several standardization
+   efforts [BBS][BLIND-BBS][W3CBBS].  These efforts are of relevance to
+   the European Union Digital Identity (EUDI) wallet [EUDI-ARF], which
+   is mandated to implement user authentication with strong privacy
+   guarantees, including selective disclosure and unlinkability.
 
    A central requirement for credentials used in digital-identity
-   deployments is _non-transferability_, usually achieved by _device
-   binding_: the credential is bound to a key held in a secure element
-   (SE) on the user's device, and at presentation time the holder
-   produces a fresh signature -- a proof of possession (PoP) -- under
-   the corresponding secret key, which never leaves the SE.  Consumer-
-   device secure elements are, in practice, restricted to ECDSA over
-   P-256 and do not expose the pairing-friendly operations required by
-   native anonymous-credential device binding.  The lack of an efficient
-   and robust device-binding mechanism for anonymous credentials on
-   legacy hardware was a key reason such credentials were not used in
-   the initial EUDI deployment, which instead relies on batch-issued
-   one-time-use credentials [DEROSA].
+   deployments is non-transferability: a credential must be usable only
+   by its legitimate holder, and not be shared, or copied.  The standard
+   way to enforce this is device binding.  The credential is tied to a
+   key held in a secure element (SE) on the user's device, and at
+   presentation time the holder produces a fresh signature -- a proof of
+   possession (PoP) -- under the corresponding secret key, which never
+   leaves the SE.  Because the key is non-exportable, the credential
+   cannot be used without the device that holds it.
+
+   The EUDI architecture mandates device binding to a secure element,
+   but consumer-device secure elements are, in practice, restricted to
+   ECDSA over P-256 and do not expose the pairing-friendly operations
+   required by native anonymous-credential device binding.  The lack of
+   an efficient and robust device-binding mechanism for anonymous
+   credentials on legacy hardware was a key reason such credentials were
+   not used in the initial EUDI deployment, which instead relies on
+   batch-issued one-time-use credentials [DEROSA].
 
    This document addresses that gap: it specifies how to prove
-   possession of an ECDSA signature under a _committed_ device public
-   key, so that ECDSA device binding can be composed with a pairing-
-   based credential layer such as BBS.  The solution we propose is based
-   on Schnorr-type proofs, and provides a robust, well understood
-   approach that avoids implementation and interoperability challenges
-   posed by circuit-based constructions.
+   possession of an ECDSA signature under a committed device public key,
+   so that ECDSA device binding can be composed with a pairing-based
+   credential layer such as BBS.  Our solution is based on Schnorr-type
+   proofs, providing a robust, well-understood approach that avoids the
+   implementation and interoperability challenges posed by circuit-based
+   constructions.
 
 1.1.  Scope
 
@@ -179,9 +184,9 @@ Table of Contents
    *  [MODULAR-BBS] (modular BBS sub-proofs).  The PoP specified here is
       intended to instantiate the ecdsa-p256-db device-binding sub-proof
       of [MODULAR-BBS], which exposes the holder's P-256 public key as
-      committed BBS messages (key binding type ecdsa-p256-limb4-64) and
-      binds the sub-proof to a challenge derived from the presentation
-      headers.  Section 10 describes this binding.
+      four committed BBS messages carrying its 128-bit limbs (at indices
+      [0, 1, 2, 3]) and binds the sub-proof to a challenge derived from
+      the presentation headers.  Section 10 describes this binding.
 
    This work was presented to the CFRG; see [AGENDA126].
 
@@ -327,14 +332,14 @@ Table of Contents
 
    x = x_0 + 2^128 * x_1,   0 <= x_i < 2^128
 
-   and likewise for y.  The modular BBS framework of [MODULAR-BBS]
-   instead encodes the key as four 64-bit limbs (the ecdsa-p256-limb4-64
-   key binding), an encoding it inherits from the modular credential
-   framework of [LSZ]; this document opts for 128-bit limbs, which
-   guarantee 112 bits of security for the transfer of Section 5 --
-   sufficient for this application.  The proofs below are agnostic to
-   the choice (see Section 5), but we opt for 128 bit limbs for improved
-   efficiency.
+   and likewise for y.  This matches the four 128-bit limb commitments
+   (at indices [0, 1, 2, 3]) now used by the ecdsa-p256-db device
+   binding of [MODULAR-BBS], which adopted this layout to align with
+   [PAPER].  The 128-bit limb size guarantees 112 bits of security for
+   the transfer of Section 5 -- sufficient for this application -- and
+   is chosen for efficiency and for interoperability with [MODULAR-BBS];
+   the proofs below are otherwise agnostic to the limb size (see
+   Section 5).
 
    The credential layer is responsible, at issuance, for guaranteeing
    that (a) each limb lies in its declared range and (b) (x, y) is a
@@ -428,11 +433,10 @@ Verifier checks (per limb i):
 
    This document adopts 128-bit limbs (b_m = 128) for the transfer, as
    in [PAPER]: this minimizes the number of cross-group instances, and
-   with the [OKMZ] parameters achieves 112-bit security.  The 64-bit
-   limbs of the ecdsa-p256-limb4-64 encoding (Section 4.2) work equally
-   well -- they leave more headroom below min(|F_s|, |F_q|) and so can
-   reach higher soundness -- at the cost of twice as many cross-group
-   instances; profiles MAY use either, and profiles with stricter
+   with the [OKMZ] parameters achieves 112-bit security.  Smaller limbs
+   (e.g. 64-bit) work equally well -- they leave more headroom below
+   min(|F_s|, |F_q|) and so can reach higher soundness -- at the cost of
+   proportionally more cross-group instances; profiles with stricter
    requirements SHOULD adjust the limb size and repetition accordingly.
 
    The exact Fiat-Shamir binding for this transfer is not yet fixed by
@@ -672,13 +676,16 @@ Verifier checks (per limb i):
 
    When used as the ecdsa-p256-db sub-proof of [MODULAR-BBS]:
 
-   *  The holder's P-256 public key occupies BBS message slots 0..7
-      under key binding type ecdsa-p256-limb4-64, encoded as in
-      Section 4.2.  The BBS core proof (CoreProofGen) exposes these as
-      Pedersen commitments over the credential curve; these are the
-      inputs C_i to the transfer of Section 5.
+   *  The holder's P-256 public key occupies four committed BBS messages
+      carrying its 128-bit limbs, encoded as in Section 4.2.  The sub-
+      proof carries alg = "ecdsa-p256-db" and takes no inputs beyond the
+      base sub-proof fields; its i field MUST be [0, 1, 2, 3], naming
+      the four indices that hold these limbs.  The BBS core proof
+      (CoreProofGen) exposes the four messages as Pedersen commitments
+      over the credential curve; these are the inputs C_i to the
+      transfer of Section 5.
 
-   *  These eight slots MAY be populated at issuance as committed
+   *  The four messages MAY be populated at issuance as committed
       messages using blind BBS issuance ([BLIND-BBS]): the holder sends
       the issuer a commitment to its device public key (with the holder-
       held blinding scalar) and a proof of its correctness, and the
@@ -687,19 +694,27 @@ Verifier checks (per limb i):
       issuer, and the issuance-time commitment to Q is reused as the
       transfer input above.
 
-   *  The presentation nonce used to form alpha and Hpt (Section 3) MUST
-      be derived from the presentation headers exactly as required by
-      the device-binding sub-proof of [MODULAR-BBS], so that the PoP is
-      freshly bound to this presentation.
+   *  The message signed by the secure element is not transmitted; both
+      parties recompute it as db_msg = "JWP-BBS-DB-CHAL" ||
+      presentation_header_octets, where "JWP-BBS-DB-CHAL" is the literal
+      ASCII string.  Because db_msg binds presentation_header_octets
+      (which carries the nonce and aud), it is fresh per presentation.
+      db_msg is the ECDSA message of the PoP: it plays the role of nonce
+      in Section 3, so alpha and Hpt are formed from H(db_msg).
 
-   *  The sub-proof object carries alg = "ecdsa-p256-db", the committed-
-      message indices in its input field, and the serialized non-
-      interactive PoP (Section 9) as its proof bytes.
+   *  The proof bytes are the serialized non-interactive PoP
+      (Section 9): a zero-knowledge proof of knowledge of (Q, (r, s))
+      such that the four commitments at the indices in i open to the
+      128-bit limbs of Q, and (r, s) is a valid ECDSA P-256 signature on
+      db_msg under Q.
 
-   *  The designated-expert requirement of [MODULAR-BBS] -- that a sub-
-      proof binds to a commitment attested by the core proof -- is met
-      because the transfer proof of Section 5 ties the Tom commitment
-      C_Q to the credential-curve commitment produced by CoreProofGen.
+   *  The verifier accepts iff the four indices in i are all committed
+      in the core proof and the sub-proof verifies against the four
+      commitments and the locally recomputed db_msg.  This meets the
+      [MODULAR-BBS] requirement that a sub-proof bind to commitments
+      attested by the core proof, since the transfer of Section 5 ties
+      the Tom commitments C_Q to the credential-curve commitments
+      produced by CoreProofGen.
 
    The PoP itself is agnostic to the credential scheme: any scheme that
    can expose a Pedersen commitment to the device public key over a
@@ -878,6 +893,10 @@ Verifier checks (per limb i):
 
    [UBIQUE]   Ubique, "BBS+ Device Binding via ECDSA (EUDI Innovation
               Competition prototype)", 2024.
+
+   [W3CBBS]   World Wide Web Consortium (W3C), "Data Integrity BBS
+              Cryptosuites v1.0", 2025,
+              <https://www.w3.org/TR/vc-di-bbs/>.
 
    [ZKATTEST] Faz-Hernandez, A., Ladd, W., and D. Maram, "ZKAttest: Ring
               and Group Signatures on top of existing ECDSA keys",
