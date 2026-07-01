@@ -541,6 +541,7 @@ All parallel repetitions of `SM` and the parallel `SM x PA` AND-composition shar
 The exact Fiat-Shamir binding for the composed protocol is not yet fixed by this document.
 In particular, the precise inputs absorbed before each challenge -- the domain separator, the credential- and Tom-curve commitments and announcements of the transfer ({{transfer}}), the prover messages of `SM` and `PA`, and the {{OKMZ}} bound parameters -- remain to be specified, and MUST be pinned down (consistent with {{FIAT-SHAMIR}}) before this profile is interoperable.
 The move structure of the sub-protocols is normative; the exact byte-level Fiat-Shamir inputs and complete composed protocol specification are deferred to a future revision.
+
 # Integration with Modular BBS {#integration}
 
 When used as the `ecdsa-p256-db` sub-proof of {{MODULAR-BBS}}:
