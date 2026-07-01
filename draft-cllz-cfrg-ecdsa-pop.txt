@@ -730,9 +730,9 @@ Verifier checks (per limb i):
    composition of Section 3, including the [OKMZ] style commitment
    transfer of Section 5 and the Tom-256 scalar-multiplication and
    point-addition proofs -- is available at
-   https://github.com/alexandroszacharakis8/ecdsapop_t256ipa
-   (https://github.com/alexandroszacharakis8/ecdsapop_t256ipa).  It is
-   written in Rust and underlies the measurements reported in [PAPER].
+   https://github.com/hpicrypto/ecdsa_pops
+   (https://github.com/hpicrypto/ecdsa_pops).  It is written in Rust and
+   underlies the measurements reported in [PAPER].
 
    [PAPER] gives three realizations of the same ECDSA-device-binding
    relation -- the Schnorr-type proof specified in this document and two
