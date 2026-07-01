@@ -144,10 +144,6 @@ informative:
     author:
       - name: Paolo De Rosa
     date: 2024
-  AGENDA126:
-    title: "Crypto Forum Research Group (CFRG) Agenda, IETF 126"
-    target: https://datatracker.ietf.org/doc/agenda-126-cfrg/
-    date: 2026
 
 --- abstract
 
@@ -168,7 +164,7 @@ A central requirement for credentials used in digital-identity deployments is no
 
 The EUDI architecture mandates device binding to a secure element, but consumer-device secure elements are, in practice, restricted to ECDSA over P-256 and do not expose the pairing-friendly operations required by native anonymous-credential device binding. The lack of an efficient and robust device-binding mechanism for anonymous credentials on legacy hardware was a key reason such credentials were not used in the initial EUDI deployment, which instead relies on batch-issued one-time-use credentials {{DEROSA}}.
 
-This document addresses that gap: it specifies how to prove possession of an ECDSA signature under a committed device public key, so that ECDSA device binding can be composed with a pairing-based credential layer such as BBS. Our solution is based on Schnorr-type proofs, providing a robust, well-understood approach that avoids the implementation and interoperability challenges posed by circuit-based constructions.
+Here, we address the gap by specifying how to prove possession of an ECDSA signature under a committed device public key, so that ECDSA device binding can be composed with a pairing-based credential layer such as BBS. Our solution is based on Schnorr-type proofs, providing a robust, well-understood approach that avoids the implementation and interoperability challenges of circuit-based constructions.
 
 ## Scope
 
@@ -190,8 +186,6 @@ This document is designed to compose with two CFRG / IETF efforts:
 - {{MODULAR-BBS}} (modular BBS sub-proofs).
   The PoP specified here is intended to instantiate the `ecdsa-p256-db` device-binding sub-proof of {{MODULAR-BBS}}, which exposes the holder's P-256 public key as four committed BBS messages carrying its 128-bit limbs (at indices `[0, 1, 2, 3]`) and binds the sub-proof to a challenge derived from the presentation headers.
   {{integration}} describes this binding.
-
-This work was presented to the CFRG; see {{AGENDA126}}.
 
 # Conventions and Definitions
 
