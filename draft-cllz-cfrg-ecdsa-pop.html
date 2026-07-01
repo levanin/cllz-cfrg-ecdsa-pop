@@ -1268,7 +1268,7 @@ SNARK-based realizations of the same relation are out of scope.<a href="#section
 <p id="section-1-1">Anonymous credentials enable privacy-preserving authentication: a holder presents an issuer-attested credential to a relying party while revealing only the minimum necessary information and remaining unlinkable across presentations. BBS signatures are a leading basis for such credentials and are being adopted in several standardization efforts <span>[<a href="#BBS" class="cite xref">BBS</a>]</span><span>[<a href="#BLIND-BBS" class="cite xref">BLIND-BBS</a>]</span><span>[<a href="#W3CBBS" class="cite xref">W3CBBS</a>]</span>. These efforts are of relevance to the European Union Digital Identity (EUDI) wallet <span>[<a href="#EUDI-ARF" class="cite xref">EUDI-ARF</a>]</span>, which is mandated to implement user authentication with strong privacy guarantees, including selective disclosure and unlinkability.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">A central requirement for credentials used in digital-identity deployments is non-transferability: a credential must be usable only by its legitimate holder, and not be shared, or copied. The standard way to enforce this is device binding. The credential is tied to a key held in a secure element (SE) on the user's device, and at presentation time the holder produces a fresh signature -- a proof of possession (PoP) -- under the corresponding secret key, which never leaves the SE. Because the key is non-exportable, the credential cannot be used without the device that holds it.<a href="#section-1-2" class="pilcrow">¶</a></p>
 <p id="section-1-3">The EUDI architecture mandates device binding to a secure element, but consumer-device secure elements are, in practice, restricted to ECDSA over P-256 and do not expose the pairing-friendly operations required by native anonymous-credential device binding. The lack of an efficient and robust device-binding mechanism for anonymous credentials on legacy hardware was a key reason such credentials were not used in the initial EUDI deployment, which instead relies on batch-issued one-time-use credentials <span>[<a href="#DEROSA" class="cite xref">DEROSA</a>]</span>.<a href="#section-1-3" class="pilcrow">¶</a></p>
-<p id="section-1-4">This document addresses that gap: it specifies how to prove possession of an ECDSA signature under a committed device public key, so that ECDSA device binding can be composed with a pairing-based credential layer such as BBS. Our solution is based on Schnorr-type proofs, providing a robust, well-understood approach that avoids the implementation and interoperability challenges posed by circuit-based constructions.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<p id="section-1-4">Here, we address the gap by specifying how to prove possession of an ECDSA signature under a committed device public key, so that ECDSA device binding can be composed with a pairing-based credential layer such as BBS. Our solution is based on Schnorr-type proofs, providing a robust, well-understood approach that avoids the implementation and interoperability challenges of circuit-based constructions.<a href="#section-1-4" class="pilcrow">¶</a></p>
 <div id="scope">
 <section id="section-1.1">
         <h3 id="name-scope">
@@ -1299,7 +1299,6 @@ The PoP specified here is intended to instantiate the <code>ecdsa-p256-db</code>
 <a href="#integration" class="auto internal xref">Section 10</a> describes this binding.<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-1.2-3">This work was presented to the CFRG; see <span>[<a href="#AGENDA126" class="cite xref">AGENDA126</a>]</span>.<a href="#section-1.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1891,10 +1890,6 @@ It defines the construction behind the <code>ecdsa-p256-db</code> sub-proof algo
 <a href="#section-14.2" class="section-number selfRef">14.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
-<dt id="AGENDA126">[AGENDA126]</dt>
-        <dd>
-<span class="refTitle">"Crypto Forum Research Group (CFRG) Agenda, IETF 126"</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/agenda-126-cfrg/">https://datatracker.ietf.org/doc/agenda-126-cfrg/</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="BBS">[BBS]</dt>
         <dd>
 <span class="refAuthor">Looker, T.</span>, <span class="refAuthor">Kalos, V.</span>, <span class="refAuthor">Whitehead, A.</span>, and <span class="refAuthor">M. Lodder</span>, <span class="refTitle">"The BBS Signature Scheme"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-bbs-signatures-10</span>, <time datetime="2026-01-08" class="refDate">8 January 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-signatures-10">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-signatures-10</a>&gt;</span>. </dd>

@@ -142,13 +142,12 @@ Table of Contents
    not used in the initial EUDI deployment, which instead relies on
    batch-issued one-time-use credentials [DEROSA].
 
-   This document addresses that gap: it specifies how to prove
-   possession of an ECDSA signature under a committed device public key,
-   so that ECDSA device binding can be composed with a pairing-based
-   credential layer such as BBS.  Our solution is based on Schnorr-type
-   proofs, providing a robust, well-understood approach that avoids the
-   implementation and interoperability challenges posed by circuit-based
-   constructions.
+   Here, we address the gap by specifying how to prove possession of an
+   ECDSA signature under a committed device public key, so that ECDSA
+   device binding can be composed with a pairing-based credential layer
+   such as BBS.  Our solution is based on Schnorr-type proofs, providing
+   a robust, well-understood approach that avoids the implementation and
+   interoperability challenges of circuit-based constructions.
 
 1.1.  Scope
 
@@ -187,8 +186,6 @@ Table of Contents
       four committed BBS messages carrying its 128-bit limbs (at indices
       [0, 1, 2, 3]) and binds the sub-proof to a challenge derived from
       the presentation headers.  Section 10 describes this binding.
-
-   This work was presented to the CFRG; see [AGENDA126].
 
 2.  Conventions and Definitions
 
@@ -848,10 +845,6 @@ Verifier checks (per limb i):
               draft-irtf-cfrg-sigma-protocols-02>.
 
 14.2.  Informative References
-
-   [AGENDA126]
-              "Crypto Forum Research Group (CFRG) Agenda, IETF 126",
-              2026, <https://datatracker.ietf.org/doc/agenda-126-cfrg/>.
 
    [BBS]      Looker, T., Kalos, V., Whitehead, A., and M. Lodder, "The
               BBS Signature Scheme", Work in Progress, Internet-Draft,
