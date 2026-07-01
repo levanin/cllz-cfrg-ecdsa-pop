@@ -226,7 +226,7 @@ The holder possesses an ECDSA key pair `(x, Q)` with `Q = x*P` over P-256, where
 The device public key MAY be carried into the credential as a *committed message* via blind issuance ({{BLIND-BBS}}), so that the issuer signs over `Q` without learning it; in that case the Pedersen commitment to `Q` produced during issuance is the input to the transfer of {{transfer}}.
 At presentation time the verifier supplies a fresh nonce `nonce`; the holder uses the secure element to produce an ECDSA signature on `nonce` and then proves, in zero knowledge, that it knows such a signature under the committed key `Q`, without revealing `Q`.
 
-As shown in {{ZKATTEST}}, an ECDSA signature `(r, s)` on a message can be deterministically rewritten as a pair `(K, z)` with `K = k*P`, `r = F(K)`, and `z = r^{-1} * s mod n_p`.
+As shown in {{ZKATTEST}}, an ECDSA signature `(r, s)` on a message can be deterministically rewritten as a pair `(K, z)` with `r = F(K)`, and `z = r^{-1} * s mod n_p`.
 Verification then reduces to checking
 
 ~~~
@@ -269,7 +269,7 @@ PoP = ( SM x PA ) o group o transfer
 
 Each step is an honest-verifier zero-knowledge, public-coin reduction.
 Unrolled, their composition is a five-round (i.e. five-message) public-coin interactive protocol between prover and verifier where the commitment/response flows of the underlying protocols interleave into five moves.
-This interactive protocol is then made non-interactive by applying the Fiat-Shamir transform ({{fiat-shamir}}), deriving every verifier challenge from the transcript; the exact per-challenge transcript inputs remain to be specified (see {{transfer}} and {{fiat-shamir}}).
+This interactive protocol is then made non-interactive by applying the Fiat-Shamir transform ({{fiat-shamir}}), deriving every verifier challenge from the transcript; the exact per-challenge transcript inputs remain to be specified (see {{fiat-shamir}}).
 The result is a non-interactive zero-knowledge proof of knowledge for (Eq. POP).
 
 # Parameters and Encodings
@@ -373,12 +373,8 @@ C_x = Commit~(x; rho_x),    C_y = Commit~(y; rho_y)
 
 These two commitments, together denoted `C_Q`, are the output statement of the reduction and the committed form of `Q` used by the remaining proofs.
 
-This document adopts 128-bit limbs (`b_m = 128`) for the transfer, as in {{PAPER}}: this minimizes the number of cross-group instances, and with the {{OKMZ}} parameters achieves 112-bit security.
+This document adopts 128-bit limbs (and the parameters `b_m = 128, b_c = 112,b_f = 8`) for the transfer, as in {{PAPER}}: this minimizes the number of cross-group instances, and with the {{OKMZ}} parameters achieves 112-bit security.
 Smaller limbs (e.g. 64-bit) work equally well -- they leave more headroom below `min(|F_s|, |F_q|)` and so can reach higher soundness -- at the cost of proportionally more cross-group instances; profiles with stricter requirements SHOULD adjust the limb size and repetition accordingly.
-
-The exact Fiat-Shamir binding for this transfer is not yet fixed by this document.
-In particular, the precise inputs absorbed before the challenge `c` -- the domain separator, the credential- and Tom-curve commitments `C_i`, `C~_i`, the announcements `A_i`, `A~_i`, and the {{OKMZ}} bound parameters -- remain to be specified, and MUST be pinned down (consistent with {{FIAT-SHAMIR}} and {{fiat-shamir}}) before this profile is interoperable.
-The move structure above is normative; its exact byte-level Fiat-Shamir inputs are deferred to a future revision.
 
 # Reduction to Curve Operations {#rok-group}
 
@@ -404,7 +400,7 @@ Protocol:
 Note that `C_Q = (C_x, C_y)` is a pair of coordinate commitments; the point-addition proof of {{point-addition}} operates per coordinate.
 Likewise `C_Z` and `C_H` are coordinate-commitment pairs.
 
-The two output statements are then proved in parallel: `SM x PA`.
+The two output statements are then proved in a parallel AND-composition: `SM x PA`.
 
 # Scalar-Multiplication Proof {#scalar-mult}
 
@@ -532,7 +528,7 @@ The non-zero check (8) and the multiplicative structure of (3),(4),(6),(10) are 
 
 # Non-Interactive Proofs (Fiat-Shamir) {#fiat-shamir}
 
-The interactive protocols above are public-coin and are made non-interactive with the Fiat-Shamir transform specified in the companion document {{FIAT-SHAMIR}}, applied to the Sigma protocols composed via {{SIGMA}}: each verifier challenge (`b` in {{scalar-mult}}, `c` in {{point-addition}}) is derived by absorbing, into the {{FIAT-SHAMIR}} codec (duplex sponge), a transcript that includes a protocol/version domain separator, the ciphersuite identifier, the full statement, and all prior prover messages.
+The interactive protocols above are public-coin and are made non-interactive with the Fiat-Shamir transform specified in the companion document {{FIAT-SHAMIR}}, applied to the Sigma protocols composed via {{SIGMA}}: each verifier challenge -- the equality-proof challenge of {{transfer}}, the bit-challenge `b` of {{scalar-mult}}, and the challenge `c` of {{point-addition}} -- is derived by absorbing, into the {{FIAT-SHAMIR}} codec (duplex sponge), a transcript that includes a protocol/version domain separator, the ciphersuite identifier, the full statement, and all prior prover messages.
 
 Implementations MUST use the codec and challenge-derivation of {{FIAT-SHAMIR}} and MUST include the following in the Fiat-Shamir transcript:
 
@@ -542,6 +538,9 @@ Implementations MUST use the codec and challenge-derivation of {{FIAT-SHAMIR}} a
 
 All parallel repetitions of `SM` and the parallel `SM x PA` AND-composition share a single Fiat-Shamir transcript.
 
+The exact Fiat-Shamir binding for the composed protocol is not yet fixed by this document.
+In particular, the precise inputs absorbed before each challenge -- the domain separator, the credential- and Tom-curve commitments and announcements of the transfer ({{transfer}}), the prover messages of `SM` and `PA`, and the {{OKMZ}} bound parameters -- remain to be specified, and MUST be pinned down (consistent with {{FIAT-SHAMIR}}) before this profile is interoperable.
+The move structure of the sub-protocols is normative; the exact byte-level Fiat-Shamir inputs and complete composed protocol specification are deferred to a future revision.
 # Integration with Modular BBS {#integration}
 
 When used as the `ecdsa-p256-db` sub-proof of {{MODULAR-BBS}}:
