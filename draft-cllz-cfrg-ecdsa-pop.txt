@@ -19,22 +19,22 @@ Expires: 2 January 2027                         Hasso Plattner Institute
 Abstract
 
    This document specifies a Schnorr-type, circuit-free zero-knowledge
-   proof of possession (PoP) of an ECDSA signature produced under a
-   committed public key over the NIST P-256 (secp256r1) curve.  The PoP
-   lets a credential holder prove, in zero knowledge, that it can
-   produce a fresh ECDSA signature under a device public key without
+   proof of possession (PoP) of an ECDSA signature [FIPS186-5] produced
+   under a committed public key over the NIST P-256 (secp256r1) curve.
+   The PoP lets a credential holder prove, in zero knowledge, that it
+   can produce a fresh ECDSA signature under a device public key without
    revealing that key, thereby providing device binding for privacy-
    preserving credentials whose presentation must remain unlinkable.
 
-   The construction is built exclusively from Sigma protocols: it
-   decomposes the ECDSA verification equation into a scalar-
+   The construction is built exclusively from Sigma protocols [SIGMA] as
+   it decomposes the ECDSA verification equation into a scalar-
    multiplication relation and a point-addition relation over P-256,
    each proved with a dedicated Sigma protocol over a companion ("Tom")
    curve whose scalar field equals the base field of P-256.  It is
    designed to be expressed using the interfaces of the CFRG Sigma-
-   protocols specification and to support compatibility with the device-
-   binding sub-proof of the modular BBS / JSON Web Proofs construction.
-   SNARK-based realizations of the same relation are out of scope.
+   protocols specification and to serve as the device-binding sub-proof
+   of the modular BBS / JSON Web Proofs construction.  SNARK-based
+   realizations of the same relation are out of scope.
 
 About This Document
 
@@ -245,8 +245,8 @@ Table of Contents
    key Q, without revealing Q.
 
    As shown in [ZKATTEST], an ECDSA signature (r, s) on a message can be
-   deterministically rewritten as a pair (K, z) with K = k*P, r = F(K),
-   and z = r^{-1} * s mod n_p.  Verification then reduces to checking
+   deterministically rewritten as a pair (K, z) with r = F(K), and z =
+   r^{-1} * s mod n_p.  Verification then reduces to checking
 
    z*K = H(m) * r^{-1} * P + Q
 
@@ -295,9 +295,9 @@ Table of Contents
    interleave into five moves.  This interactive protocol is then made
    non-interactive by applying the Fiat-Shamir transform (Section 9),
    deriving every verifier challenge from the transcript; the exact per-
-   challenge transcript inputs remain to be specified (see Section 5 and
-   Section 9).  The result is a non-interactive zero-knowledge proof of
-   knowledge for (Eq. POP).
+   challenge transcript inputs remain to be specified (see Section 9).
+   The result is a non-interactive zero-knowledge proof of knowledge for
+   (Eq. POP).
 
 4.  Parameters and Encodings
 
@@ -431,22 +431,14 @@ Verifier checks (per limb i):
    of the reduction and the committed form of Q used by the remaining
    proofs.
 
-   This document adopts 128-bit limbs (b_m = 128) for the transfer, as
-   in [PAPER]: this minimizes the number of cross-group instances, and
-   with the [OKMZ] parameters achieves 112-bit security.  Smaller limbs
-   (e.g. 64-bit) work equally well -- they leave more headroom below
-   min(|F_s|, |F_q|) and so can reach higher soundness -- at the cost of
-   proportionally more cross-group instances; profiles with stricter
-   requirements SHOULD adjust the limb size and repetition accordingly.
-
-   The exact Fiat-Shamir binding for this transfer is not yet fixed by
-   this document.  In particular, the precise inputs absorbed before the
-   challenge c -- the domain separator, the credential- and Tom-curve
-   commitments C_i, C~_i, the announcements A_i, A~_i, and the [OKMZ]
-   bound parameters -- remain to be specified, and MUST be pinned down
-   (consistent with [FIAT-SHAMIR] and Section 9) before this profile is
-   interoperable.  The move structure above is normative; its exact
-   byte-level Fiat-Shamir inputs are deferred to a future revision.
+   This document adopts 128-bit limbs (and the parameters b_m = 128, b_c
+   = 112,b_f = 8) for the transfer, as in [PAPER]: this minimizes the
+   number of cross-group instances, and with the [OKMZ] parameters
+   achieves 112-bit security.  Smaller limbs (e.g. 64-bit) work equally
+   well -- they leave more headroom below min(|F_s|, |F_q|) and so can
+   reach higher soundness -- at the cost of proportionally more cross-
+   group instances; profiles with stricter requirements SHOULD adjust
+   the limb size and repetition accordingly.
 
 6.  Reduction to Curve Operations
 
@@ -480,7 +472,8 @@ Verifier checks (per limb i):
    point-addition proof of Section 8 operates per coordinate.  Likewise
    C_Z and C_H are coordinate-commitment pairs.
 
-   The two output statements are then proved in parallel: SM x PA.
+   The two output statements are then proved in a parallel AND-
+   composition: SM x PA.
 
 7.  Scalar-Multiplication Proof
 
@@ -651,11 +644,12 @@ Verifier checks (per limb i):
    The interactive protocols above are public-coin and are made non-
    interactive with the Fiat-Shamir transform specified in the companion
    document [FIAT-SHAMIR], applied to the Sigma protocols composed via
-   [SIGMA]: each verifier challenge (b in Section 7, c in Section 8) is
-   derived by absorbing, into the [FIAT-SHAMIR] codec (duplex sponge), a
-   transcript that includes a protocol/version domain separator, the
-   ciphersuite identifier, the full statement, and all prior prover
-   messages.
+   [SIGMA]: each verifier challenge -- the equality-proof challenge of
+   Section 5, the bit-challenge b of Section 7, and the challenge c of
+   Section 8 -- is derived by absorbing, into the [FIAT-SHAMIR] codec
+   (duplex sponge), a transcript that includes a protocol/version domain
+   separator, the ciphersuite identifier, the full statement, and all
+   prior prover messages.
 
    Implementations MUST use the codec and challenge-derivation of
    [FIAT-SHAMIR] and MUST include the following in the Fiat-Shamir
@@ -671,6 +665,17 @@ Verifier checks (per limb i):
 
    All parallel repetitions of SM and the parallel SM x PA AND-
    composition share a single Fiat-Shamir transcript.
+
+   The exact Fiat-Shamir binding for the composed protocol is not yet
+   fixed by this document.  In particular, the precise inputs absorbed
+   before each challenge -- the domain separator, the credential- and
+   Tom-curve commitments and announcements of the transfer (Section 5),
+   the prover messages of SM and PA, and the [OKMZ] bound parameters --
+   remain to be specified, and MUST be pinned down (consistent with
+   [FIAT-SHAMIR]) before this profile is interoperable.  The move
+   structure of the sub-protocols is normative; the exact byte-level
+   Fiat-Shamir inputs and complete composed protocol specification are
+   deferred to a future revision.
 
 10.  Integration with Modular BBS
 

@@ -10,10 +10,10 @@
 <meta content="Shai Levin" name="author">
 <meta content="Alexandros Zacharakis" name="author">
 <meta content='
-       This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature produced under a committed public key over the NIST P-256 (secp256r1) curve.
+       This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature   produced under a committed public key over the NIST P-256 (secp256r1) curve.
 The PoP lets a credential holder prove, in zero knowledge, that it can produce a fresh ECDSA signature under a device public key without revealing that key, thereby providing device binding for privacy-preserving credentials whose presentation must remain unlinkable. 
-       The construction is built exclusively from Sigma protocols: it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
-It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to support compatibility with the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
+       The construction is built exclusively from Sigma protocols   as it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
+It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to serve as the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
 SNARK-based realizations of the same relation are out of scope. 
     ' name="description">
 <meta content="xml2rfc 3.34.0" name="generator">
@@ -1098,10 +1098,10 @@ svg {
 <h1 id="title">Schnorr-Type Proofs of Possession for ECDSA Device Binding</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature produced under a committed public key over the NIST P-256 (secp256r1) curve.
+<p id="section-abstract-1">This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature <span>[<a href="#FIPS186-5" class="cite xref">FIPS186-5</a>]</span> produced under a committed public key over the NIST P-256 (secp256r1) curve.
 The PoP lets a credential holder prove, in zero knowledge, that it can produce a fresh ECDSA signature under a device public key without revealing that key, thereby providing device binding for privacy-preserving credentials whose presentation must remain unlinkable.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">The construction is built exclusively from Sigma protocols: it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
-It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to support compatibility with the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
+<p id="section-abstract-2">The construction is built exclusively from Sigma protocols <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span> as it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
+It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to serve as the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
 SNARK-based realizations of the same relation are out of scope.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
@@ -1354,7 +1354,7 @@ Pedersen commitments used here are perfectly hiding and computationally binding 
 <p id="section-3-1">The holder possesses an ECDSA key pair <code>(x, Q)</code> with <code>Q = x*P</code> over P-256, where <code>Q</code> has been certified inside a credential (e.g., as committed BBS messages).
 The device public key <span class="bcp14">MAY</span> be carried into the credential as a <em>committed message</em> via blind issuance (<span>[<a href="#BLIND-BBS" class="cite xref">BLIND-BBS</a>]</span>), so that the issuer signs over <code>Q</code> without learning it; in that case the Pedersen commitment to <code>Q</code> produced during issuance is the input to the transfer of <a href="#transfer" class="auto internal xref">Section 5</a>.
 At presentation time the verifier supplies a fresh nonce <code>nonce</code>; the holder uses the secure element to produce an ECDSA signature on <code>nonce</code> and then proves, in zero knowledge, that it knows such a signature under the committed key <code>Q</code>, without revealing <code>Q</code>.<a href="#section-3-1" class="pilcrow">¶</a></p>
-<p id="section-3-2">As shown in <span>[<a href="#ZKATTEST" class="cite xref">ZKATTEST</a>]</span>, an ECDSA signature <code>(r, s)</code> on a message can be deterministically rewritten as a pair <code>(K, z)</code> with <code>K = k*P</code>, <code>r = F(K)</code>, and <code>z = r^{-1} * s mod n_p</code>.
+<p id="section-3-2">As shown in <span>[<a href="#ZKATTEST" class="cite xref">ZKATTEST</a>]</span>, an ECDSA signature <code>(r, s)</code> on a message can be deterministically rewritten as a pair <code>(K, z)</code> with <code>r = F(K)</code>, and <code>z = r^{-1} * s mod n_p</code>.
 Verification then reduces to checking<a href="#section-3-2" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3-3">
 <pre>
@@ -1400,7 +1400,7 @@ PoP = ( SM x PA ) o group o transfer
 </div>
 <p id="section-3-13">Each step is an honest-verifier zero-knowledge, public-coin reduction.
 Unrolled, their composition is a five-round (i.e. five-message) public-coin interactive protocol between prover and verifier where the commitment/response flows of the underlying protocols interleave into five moves.
-This interactive protocol is then made non-interactive by applying the Fiat-Shamir transform (<a href="#fiat-shamir" class="auto internal xref">Section 9</a>), deriving every verifier challenge from the transcript; the exact per-challenge transcript inputs remain to be specified (see <a href="#transfer" class="auto internal xref">Section 5</a> and <a href="#fiat-shamir" class="auto internal xref">Section 9</a>).
+This interactive protocol is then made non-interactive by applying the Fiat-Shamir transform (<a href="#fiat-shamir" class="auto internal xref">Section 9</a>), deriving every verifier challenge from the transcript; the exact per-challenge transcript inputs remain to be specified (see <a href="#fiat-shamir" class="auto internal xref">Section 9</a>).
 The result is a non-interactive zero-knowledge proof of knowledge for (Eq. POP).<a href="#section-3-13" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1524,11 +1524,8 @@ C_x = Commit~(x; rho_x),    C_y = Commit~(y; rho_y)
 </pre><a href="#section-5.1-6" class="pilcrow">¶</a>
 </div>
 <p id="section-5.1-7">These two commitments, together denoted <code>C_Q</code>, are the output statement of the reduction and the committed form of <code>Q</code> used by the remaining proofs.<a href="#section-5.1-7" class="pilcrow">¶</a></p>
-<p id="section-5.1-8">This document adopts 128-bit limbs (<code>b_m = 128</code>) for the transfer, as in <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>: this minimizes the number of cross-group instances, and with the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> parameters achieves 112-bit security.
+<p id="section-5.1-8">This document adopts 128-bit limbs (and the parameters <code>b_m = 128, b_c = 112,b_f = 8</code>) for the transfer, as in <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>: this minimizes the number of cross-group instances, and with the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> parameters achieves 112-bit security.
 Smaller limbs (e.g. 64-bit) work equally well -- they leave more headroom below <code>min(|F_s|, |F_q|)</code> and so can reach higher soundness -- at the cost of proportionally more cross-group instances; profiles with stricter requirements <span class="bcp14">SHOULD</span> adjust the limb size and repetition accordingly.<a href="#section-5.1-8" class="pilcrow">¶</a></p>
-<p id="section-5.1-9">The exact Fiat-Shamir binding for this transfer is not yet fixed by this document.
-In particular, the precise inputs absorbed before the challenge <code>c</code> -- the domain separator, the credential- and Tom-curve commitments <code>C_i</code>, <code>C~_i</code>, the announcements <code>A_i</code>, <code>A~_i</code>, and the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> bound parameters -- remain to be specified, and <span class="bcp14">MUST</span> be pinned down (consistent with <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span> and <a href="#fiat-shamir" class="auto internal xref">Section 9</a>) before this profile is interoperable.
-The move structure above is normative; its exact byte-level Fiat-Shamir inputs are deferred to a future revision.<a href="#section-5.1-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1569,7 +1566,7 @@ relation:  z*K = Hpt + Q
       </ol>
 <p id="section-6-6">Note that <code>C_Q = (C_x, C_y)</code> is a pair of coordinate commitments; the point-addition proof of <a href="#point-addition" class="auto internal xref">Section 8</a> operates per coordinate.
 Likewise <code>C_Z</code> and <code>C_H</code> are coordinate-commitment pairs.<a href="#section-6-6" class="pilcrow">¶</a></p>
-<p id="section-6-7">The two output statements are then proved in parallel: <code>SM x PA</code>.<a href="#section-6-7" class="pilcrow">¶</a></p>
+<p id="section-6-7">The two output statements are then proved in a parallel AND-composition: <code>SM x PA</code>.<a href="#section-6-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="scalar-mult">
@@ -1720,7 +1717,7 @@ The non-zero check (8) and the multiplicative structure of (3),(4),(6),(10) are 
       <h2 id="name-non-interactive-proofs-fiat">
 <a href="#section-9" class="section-number selfRef">9. </a><a href="#name-non-interactive-proofs-fiat" class="section-name selfRef">Non-Interactive Proofs (Fiat-Shamir)</a>
       </h2>
-<p id="section-9-1">The interactive protocols above are public-coin and are made non-interactive with the Fiat-Shamir transform specified in the companion document <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span>, applied to the Sigma protocols composed via <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span>: each verifier challenge (<code>b</code> in <a href="#scalar-mult" class="auto internal xref">Section 7</a>, <code>c</code> in <a href="#point-addition" class="auto internal xref">Section 8</a>) is derived by absorbing, into the <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span> codec (duplex sponge), a transcript that includes a protocol/version domain separator, the ciphersuite identifier, the full statement, and all prior prover messages.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<p id="section-9-1">The interactive protocols above are public-coin and are made non-interactive with the Fiat-Shamir transform specified in the companion document <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span>, applied to the Sigma protocols composed via <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span>: each verifier challenge -- the equality-proof challenge of <a href="#transfer" class="auto internal xref">Section 5</a>, the bit-challenge <code>b</code> of <a href="#scalar-mult" class="auto internal xref">Section 7</a>, and the challenge <code>c</code> of <a href="#point-addition" class="auto internal xref">Section 8</a> -- is derived by absorbing, into the <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span> codec (duplex sponge), a transcript that includes a protocol/version domain separator, the ciphersuite identifier, the full statement, and all prior prover messages.<a href="#section-9-1" class="pilcrow">¶</a></p>
 <p id="section-9-2">Implementations <span class="bcp14">MUST</span> use the codec and challenge-derivation of <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span> and <span class="bcp14">MUST</span> include the following in the Fiat-Shamir transcript:<a href="#section-9-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-9-3.1">
@@ -1734,6 +1731,9 @@ The non-zero check (8) and the multiplicative structure of (3),(4),(6),(10) are 
 </li>
       </ul>
 <p id="section-9-4">All parallel repetitions of <code>SM</code> and the parallel <code>SM x PA</code> AND-composition share a single Fiat-Shamir transcript.<a href="#section-9-4" class="pilcrow">¶</a></p>
+<p id="section-9-5">The exact Fiat-Shamir binding for the composed protocol is not yet fixed by this document.
+In particular, the precise inputs absorbed before each challenge -- the domain separator, the credential- and Tom-curve commitments and announcements of the transfer (<a href="#transfer" class="auto internal xref">Section 5</a>), the prover messages of <code>SM</code> and <code>PA</code>, and the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> bound parameters -- remain to be specified, and <span class="bcp14">MUST</span> be pinned down (consistent with <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span>) before this profile is interoperable.
+The move structure of the sub-protocols is normative; the exact byte-level Fiat-Shamir inputs and complete composed protocol specification are deferred to a future revision.<a href="#section-9-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="integration">
