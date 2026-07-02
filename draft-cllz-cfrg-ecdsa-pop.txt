@@ -696,7 +696,7 @@ Verifier checks:
 
 8.3.  Expressing PA via the Sigma-Protocols Interface
 
-   Each of checks (1)-(6) and (9)-(10) has the form linear_map(response)
+   Each of checks (1)-(7) and (9)-(10) has the form linear_map(response)
    == commitment + challenge * image, i.e. a [SIGMA] LinearRelation
    whose group bases are G, H, and statement commitments (C_f1, C_tau).
    An implementation MAY therefore realize PA by allocating the scalar
@@ -704,11 +704,24 @@ Verifier checks:
    and elements (G, H, the C_* commitments) with allocate_scalars /
    allocate_elements, encoding (C1)-(C3) and the opening relations with
    append_equation and set_elements, and running the resulting batch as
-   a single Sigma protocol.  The non-zero check (8) and the
-   multiplicative structure of (3),(4),(6),(10) are captured by using
-   statement commitments as bases (the standard Sigma technique for
-   multiplication of committed values); they are not plain discrete-log
-   relations over fixed generators.
+   a single Sigma protocol.  The multiplicative and squaring checks
+   (3),(4),(6) use statement commitments (C_f1, C_tau) as bases -- bound
+   to allocated elements via set_elements -- rather than fixed
+   generators; this is the standard Sigma technique for multiplication
+   of committed values, and it stays within the LinearRelation
+   interface.
+
+   The non-zero proof for C_f1 (masks beta_1..beta_4, elements U1, U2,
+   U3, responses v_1, v_2, v_3, and checks (8)-(10)) is a distinct
+   gadget of [CDLS] and does not reduce to a plain LinearRelation.  Its
+   relations (9)-(10) are linear (over bases G, H, C_f1, with the
+   prover-sent U1 as image), but the defining ingredient is check (8),
+   U1 != identity -- a non-identity test on a prover message, not a
+   linear relation.  Because U1 = (beta_1*(b_x - a_x))*G for a uniform
+   nonzero mask beta_1, U1 is the identity exactly when b_x - a_x = 0;
+   check (8) thus certifies b_x - a_x != 0 (hence P_1 != +-P_2).  An
+   implementation MUST perform check (8) explicitly, outside the batched
+   LinearRelation.
 
 9.  Non-Interactive Proofs (Fiat-Shamir)
 
