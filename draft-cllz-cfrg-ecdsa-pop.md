@@ -413,13 +413,14 @@ where `K` is a public P-256 point, `z` a secret scalar, and `Z` a P-256 point co
 
 It is a bit-challenge Schnorr-type proof: a single execution uses a one-bit verifier challenge and has knowledge-soundness error `1/2`.
 To reach error `2^-lambda`, `lambda` independent executions are run in parallel (`lambda = 128` is RECOMMENDED).
-In one execution, the prover derives from its witness an auxiliary ("combined") instance using fresh randomness, sends the corresponding commitments, the verifier replies with a challenge bit, and the prover opens one of two related committed instances according to that bit; the point relation among the committed instances is established by invoking the point-addition proof `PA` ({{point-addition}}) in a parallel AND-composition.
+In one execution, the prover derives from its witness an auxiliary ("combined") instance using fresh randomness, sends the corresponding commitments, the verifier replies with a challenge bit, and the prover opens one of two related committed instances according to that bit; the point relation among the committed instances is established by invoking the point-addition proof internally.
 The per-execution protocol is that of {{CDLS}} (Construction for `R_SM`), with the scalar treated as a free witness as noted above.
 
 ## Protocol
 
 The following is one execution, between prover `P` and verifier `V`; `lambda` such executions run in parallel and share a single Fiat-Shamir transcript ({{fiat-shamir}}).
 `F_np` is the scalar field of P-256, and `Commit~` the Tom commitment scheme of {{transfer}}.
+As in {{rok-group}} and {{point-addition}}, each `Commit~` to a P-256 point is a pair of coordinate commitments -- one to the `x` and one to the `y` coordinate -- so `C_Z`, `C'`, and `C''` are coordinate-commitment pairs, and the openings (`rho_Z`, `rho'`, `rho''`, `tau`) and check (2) are taken per coordinate.
 
 ~~~
 Prover P                                        Verifier V
