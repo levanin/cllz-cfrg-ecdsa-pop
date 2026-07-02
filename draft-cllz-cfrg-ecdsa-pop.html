@@ -1206,6 +1206,11 @@ SNARK-based realizations of the same relation are out of scope.<a href="#section
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
             <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-scalar-multiplication-proof" class="internal xref">Scalar-Multiplication Proof</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-protocol-2" class="internal xref">Protocol</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
             <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-point-addition-proof" class="internal xref">Point-Addition Proof</a></p>
@@ -1214,7 +1219,7 @@ SNARK-based realizations of the same relation are out of scope.<a href="#section
                 <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-affine-addition-constraints" class="internal xref">Affine Addition Constraints</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
-                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-protocol-2" class="internal xref">Protocol</a></p>
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-protocol-3" class="internal xref">Protocol</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
                 <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-expressing-pa-via-the-sigma" class="internal xref">Expressing PA via the Sigma-Protocols Interface</a></p>
@@ -1401,8 +1406,7 @@ PoP = ( SM AND PA ) o group o commitment-transfer
 </pre><a href="#section-3-12" class="pilcrow">¶</a>
 </div>
 <p id="section-3-13">Each functionality is an honest-verifier zero-knowledge reduction.
-In its non-interactive form, their composition is a five-round (i.e. five-message) protocol between a prover and a verifier.
-This interactive protocol is then made non-interactive by applying the Fiat-Shamir transform (<a href="#fiat-shamir" class="auto internal xref">Section 9</a>), deriving every verifier challenge from the transcript; the exact per-challenge transcript inputs remain to be specified (see <a href="#fiat-shamir" class="auto internal xref">Section 9</a>).
+This composition in the reduction of knowledge framework is then made non-interactive by applying the Fiat-Shamir transform (<a href="#fiat-shamir" class="auto internal xref">Section 9</a>), deriving every verifier challenge from the transcript; the exact per-challenge transcript inputs remain to be specified (see <a href="#fiat-shamir" class="auto internal xref">Section 9</a>).
 The result is a non-interactive zero-knowledge proof of knowledge for (Eq. POP).<a href="#section-3-13" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1561,14 +1565,14 @@ relation:  z*K = Hpt + Q
               <p id="section-6-5.3.2.1.1">Scalar multiplication: <code>statement_SM = (C_Z, K)</code>, <code>witness_SM = (Z, rho_Z, z)</code>, asserting <code>Z = z*K</code>.<a href="#section-6-5.3.2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-6-5.3.2.2">
-              <p id="section-6-5.3.2.2.1">Point addition: <code>statement_PA = (C_Z, C_H, C_Q)</code>, <code>witness_PA</code> the openings of the three commitments, asserting <code>Z = Hpt + Q</code>.<a href="#section-6-5.3.2.2.1" class="pilcrow">¶</a></p>
+              <p id="section-6-5.3.2.2.1">Point addition: <code>statement_PA = (C_Q, C_H, C_Z)</code>, <code>witness_PA</code> the openings of the three commitments, asserting <code>Q + Hpt = Z</code> (equivalently <code>Z = Hpt + Q</code>, Eq. POP).<a href="#section-6-5.3.2.2.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </li>
       </ol>
 <p id="section-6-6">Note that <code>C_Q = (C_x, C_y)</code> is a pair of coordinate commitments; the point-addition proof of <a href="#point-addition" class="auto internal xref">Section 8</a> operates per coordinate.
 Likewise <code>C_Z</code> and <code>C_H</code> are coordinate-commitment pairs.<a href="#section-6-6" class="pilcrow">¶</a></p>
-<p id="section-6-7">The two output statements are then proved in a parallel AND-composition: <code>SM x PA</code>.<a href="#section-6-7" class="pilcrow">¶</a></p>
+<p id="section-6-7">The two output statements are then proved in a parallel composition: <code>SM x PA</code>.<a href="#section-6-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="scalar-mult">
@@ -1588,9 +1592,54 @@ R_SM = { ((C_Z, K) ; Z, rho_Z, z) :
 <p id="section-7-5">It is a bit-challenge Schnorr-type proof: a single execution uses a one-bit verifier challenge and has knowledge-soundness error <code>1/2</code>.
 To reach error <code>2^-lambda</code>, <code>lambda</code> independent executions are run in parallel (<code>lambda = 128</code> is <span class="bcp14">RECOMMENDED</span>).
 In one execution, the prover derives from its witness an auxiliary ("combined") instance using fresh randomness, sends the corresponding commitments, the verifier replies with a challenge bit, and the prover opens one of two related committed instances according to that bit; the point relation among the committed instances is established by invoking the point-addition proof <code>PA</code> (<a href="#point-addition" class="auto internal xref">Section 8</a>) in a parallel AND-composition.
-The per-execution protocol is that of <span>[<a href="#CDLS" class="cite xref">CDLS</a>]</span> (Construction for <code>R_SM</code>); implementations <span class="bcp14">MUST</span> follow that specification, with the scalar treated as a free witness as noted above.<a href="#section-7-5" class="pilcrow">¶</a></p>
-<p id="section-7-6">When expressed via <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span>, <code>SM</code> is a custom <code>SigmaProtocol</code> (not a plain <code>LinearRelation</code>): its challenge is a single bit and the protocol is run as <code>lambda</code> parallel repetitions.
-Its zero-knowledge simulator follows the standard simulation for bit-challenge Sigma protocols (sample the challenge bit, then produce a consistent commitment and response).<a href="#section-7-6" class="pilcrow">¶</a></p>
+The per-execution protocol is that of <span>[<a href="#CDLS" class="cite xref">CDLS</a>]</span> (Construction for <code>R_SM</code>), with the scalar treated as a free witness as noted above.<a href="#section-7-5" class="pilcrow">¶</a></p>
+<div id="protocol-1">
+<section id="section-7.1">
+        <h3 id="name-protocol-2">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-protocol-2" class="section-name selfRef">Protocol</a>
+        </h3>
+<p id="section-7.1-1">The following is one execution, between prover <code>P</code> and verifier <code>V</code>; <code>lambda</code> such executions run in parallel and share a single Fiat-Shamir transcript (<a href="#fiat-shamir" class="auto internal xref">Section 9</a>).
+<code>F_np</code> is the scalar field of P-256, and <code>Commit~</code> the Tom commitment scheme of <a href="#transfer" class="auto internal xref">Section 5</a>.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-7.1-2">
+<pre>
+Prover P                                        Verifier V
+  inputs: Z, z, rho_Z   (Z = z*K)               inputs: C_Z, K
+
+  # sample a fresh "combined" instance
+  omega &lt;- F_np \ {0, z, 2z}
+  Z'  = omega*K                  # public-scalar multiples of K
+  Z'' = (omega - z)*K
+  rho', rho'' &lt;- Tom randomness
+  C'  = Commit~(Z';  rho')
+  C'' = Commit~(Z''; rho'')
+
+  # point-addition instance over the committed points,
+  # asserting  Z + Z'' = Z' :
+  #   statement_PA = (C_Z, C'', C')
+  #   witness_PA   = (Z, rho_Z, Z'', rho'', Z', rho')
+  # PA is run with the C[2]-opening dropped (see {{point-addition}})
+  msg_1 = announcement of PA on statement_PA
+                 ---     C', C'', msg_1     ---&gt;
+                 &lt;---       b &lt;- {0,1}      ---
+  msg_2 = response of PA under challenge b
+  if b = 0:  (alpha, tau) = (omega,       rho')
+  if b = 1:  (alpha, tau) = (omega - z,   rho'')
+                 ---   alpha, tau, msg_2    ---&gt;
+
+Verifier checks:
+  (1)  PA on (C_Z, C'', C') accepts the transcript (msg_1, b, msg_2)
+  (2)  if b = 0:  C'  == Commit~(alpha*K; tau)
+       if b = 1:  C'' == Commit~(alpha*K; tau)
+</pre><a href="#section-7.1-2" class="pilcrow">¶</a>
+</div>
+<p id="section-7.1-3">Because <code>Z' = omega*K</code> and <code>Z'' = (omega - z)*K</code> are public-scalar multiples of <code>K</code>, the committed points satisfy <code>Z + Z'' = z*K + (omega - z)*K = omega*K = Z'</code>; the point-addition proof <code>PA</code> (<a href="#point-addition" class="auto internal xref">Section 8</a>) establishes this relation among <code>C_Z</code>, <code>C''</code>, <code>C'</code>, and is run here with the one-bit challenge <code>b</code>, which it shares with the opening (its announcement and response are <code>msg_1</code> and <code>msg_2</code>).
+Inside this composition <code>PA</code> drops its <code>C[2]</code> opening proof (the lines flagged <code>omit in SM</code> in <a href="#point-addition" class="auto internal xref">Section 8</a>), since the opening of <code>C_Z</code> is recovered from the two openings revealed across the <code>b = 0</code> and <code>b = 1</code> transcripts.
+The exclusion of <code>{0, z, 2z}</code> when sampling <code>omega</code> keeps <code>Z</code>, <code>Z'</code>, <code>Z''</code> non-identity and pairwise non-opposite, so the non-degeneracy precondition of <a href="#point-addition" class="auto internal xref">Section 8</a> holds.
+An extractor with accepting responses for both <code>b = 0</code> and <code>b = 1</code> recovers <code>alpha_0 = omega</code> and <code>alpha_1 = omega - z</code>, hence <code>z = alpha_0 - alpha_1</code> and the opening of <code>C_Z</code> as <code>Z = z*K</code>; revealing only one opening per execution gives (statistical) honest-verifier zero knowledge.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+<p id="section-7.1-4">When expressed via <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span>, <code>SM</code> is a custom <code>SigmaProtocol</code> (not a plain <code>LinearRelation</code>): its challenge is a single bit and the protocol is run as <code>lambda</code> parallel repetitions.
+Its zero-knowledge simulator follows the standard simulation for bit-challenge Sigma protocols (sample the challenge bit, then produce a consistent commitment and response).<a href="#section-7.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="point-addition">
@@ -1624,10 +1673,10 @@ Each <code>C_i</code> is a pair of coordinate commitments; we write <code>C_1 = 
 <code>PA</code> proves knowledge of openings of the coordinate commitments and of a commitment to <code>tau</code> satisfying (C1)-(C3).<a href="#section-8.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="protocol-1">
+<div id="protocol-2">
 <section id="section-8.2">
-        <h3 id="name-protocol-2">
-<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-protocol-2" class="section-name selfRef">Protocol</a>
+        <h3 id="name-protocol-3">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-protocol-3" class="section-name selfRef">Protocol</a>
         </h3>
 <p id="section-8.2-1">Both parties first recompute, by Pedersen homomorphism, the derived commitments<a href="#section-8.2-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-8.2-2">
@@ -1654,6 +1703,7 @@ Prover P                                      Verifier V
   # masks
   a_tau, a_rtau, a_f1, a_rf1, a_e1, a_e2 &lt;- F_q
   a_f3, a_rf3, a_e3 &lt;- F_q
+  a_2, a_r2 &lt;- F_q                 # omit in SM (opening of C[2])
   beta_2, beta_3, beta_4 &lt;- F_q;   beta_1 &lt;- F_q \ {0}
 
   T1 = a_tau*G + a_rtau*H
@@ -1662,10 +1712,11 @@ Prover P                                      Verifier V
   T4 = a_tau*C_tau + a_e2*H
   T5 = a_f3*G  + a_rf3*H
   T6 = a_f3*C_tau + a_e3*H
+  T7 = a_2*G   + a_r2*H            # omit in SM
   U1 = (beta_1*(b_x - a_x))*G
   U2 = beta_2*C_f1 + beta_3*H
   U3 = beta_4*G
-                  --- C_tau, T1..T6, U1, U2, U3 ---&gt;
+                  --- C_tau, T1..T6, T7, U1, U2, U3 ---&gt;   # T7: omit in SM
                   &lt;---            c &lt;- F_q        ---
   z_tau  = a_tau + c*tau
   z_rtau = a_rtau + c*r_tau
@@ -1676,6 +1727,8 @@ Prover P                                      Verifier V
   z_f3   = a_f3  + c*(a_x - t_x)
   z_rf3  = a_rf3 + c*(r_1 - r_5)
   z_e3   = a_e3  + c*((r_2 + r_6) - r_tau*(a_x - t_x))
+  z_2    = a_2   + c*a_y           # omit in SM
+  z_r2   = a_r2  + c*r_2           # omit in SM
   v_1    = beta_2 + c*beta_1
   v_2    = beta_3 - c*beta_1*(r_3 - r_1)
   v_3    = beta_4 + c*beta_1*(b_x - a_x)
@@ -1688,16 +1741,19 @@ Verifier checks:
   (4)  z_tau*C_tau + z_e2*H == T4 + c*C_p2
   (5)  z_f3*G  + z_rf3*H    == T5 + c*C_f3
   (6)  z_f3*C_tau + z_e3*H  == T6 + c*C_p3
+  (7)  z_2*G   + z_r2*H     == T7 + c*C[2]      # omit in SM
   (8)  U1 != identity
   (9)  c*U1 + U3 == v_3*G
   (10) c*U1 + U2 == v_1*C_f1 + v_2*H
 </pre><a href="#section-8.2-5" class="pilcrow">¶</a>
 </div>
-<p id="section-8.2-6">Checks (1)-(2) and (5) are openings; checks (3)-(4) and (6) prove the multiplicative / squaring constraints (C1)-(C3) (check (4) is a squaring proof realizing constraint (C2)); checks (8)-(10) are the non-zero proof for <code>C_f1</code>, establishing <code>b_x - a_x != 0</code> and hence <code>P_1 != +-P_2</code>.<a href="#section-8.2-6" class="pilcrow">¶</a></p>
+<p id="section-8.2-6">Checks (1)-(2) and (5) are openings; checks (3)-(4) and (6) prove the multiplicative / squaring constraints (C1)-(C3) (check (4) is a squaring proof realizing constraint (C2)); check (7) is the opening proof of <code>C[2]</code>, the <code>y</code>-coordinate commitment of <code>P_1</code>; and checks (8)-(10) are the non-zero proof for <code>C_f1</code>, establishing <code>b_x - a_x != 0</code> and hence <code>P_1 != +-P_2</code>.<a href="#section-8.2-6" class="pilcrow">¶</a></p>
+<p id="section-8.2-7">The lines flagged <code>omit in SM</code> -- the masks <code>a_2, a_r2</code>, the announcement <code>T7</code>, the responses <code>z_2, z_r2</code>, and check (7) -- together form the opening proof of <code>C[2]</code>.
+They are <span class="bcp14">REQUIRED</span> when <code>PA</code> is used standalone, as in the <code>SM x PA</code> composition of <a href="#rok-group" class="auto internal xref">Section 6</a> that proves <code>Z = Hpt + Q</code>.
+They are dropped when <code>PA</code> is composed inside <code>SM</code> (<a href="#scalar-mult" class="auto internal xref">Section 7</a>): there the opening of <code>C[2]</code> is instead extracted from the two colliding transcripts of the bit-challenge execution (Optimisation 3 of <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>), so proving it again would be redundant.<a href="#section-8.2-7" class="pilcrow">¶</a></p>
 <ul class="normal ulEmpty">
-<li class="normal ulEmpty" id="section-8.2-7.1">
-            <p id="section-8.2-7.1.1">Note on optimizations (from <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>): constraint (C2) uses a dedicated squaring proof rather than a generic multiplication proof; the mask <code>(a_tau, a_rtau)</code> of <code>C_tau</code> is shared across the three coordinate proofs; and the standalone opening proof of <code>C[2]</code> is omitted when <code>PA</code> is composed inside <code>SM</code> (the witness may be extracted with additional help from the openings in the transcript, see <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>).
-When <code>PA</code> is used standalone, an additional check <code>(7) z_2*G + z_r2*H == T7 + c*C[2]</code> (with corresponding masks <code>a_2, a_r2</code> and message <code>T7</code>) <span class="bcp14">MUST</span> be included.<a href="#section-8.2-7.1.1" class="pilcrow">¶</a></p>
+<li class="normal ulEmpty" id="section-8.2-8.1">
+            <p id="section-8.2-8.1.1">Note on further optimizations (from <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>): constraint (C2) uses a dedicated squaring proof rather than a generic multiplication proof, and the mask <code>(a_tau, a_rtau)</code> of <code>C_tau</code> is shared across the three coordinate proofs.<a href="#section-8.2-8.1.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1732,10 +1788,9 @@ The non-zero check (8) and the multiplicative structure of (3),(4),(6),(10) are 
           <p id="section-9-3.3.1">for the bound presentation context, the challenge octets supplied by the calling protocol (see <a href="#integration" class="auto internal xref">Section 10</a>).<a href="#section-9-3.3.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-9-4">All parallel repetitions of <code>SM</code> and the parallel <code>SM x PA</code> AND-composition share a single Fiat-Shamir transcript.<a href="#section-9-4" class="pilcrow">¶</a></p>
-<p id="section-9-5">The exact Fiat-Shamir binding for the composed protocol is not yet fixed by this document.
+<p id="section-9-4">The exact Fiat-Shamir binding for the composed protocol is not yet fixed by this document.
 In particular, the precise inputs absorbed before each challenge -- the domain separator, the credential- and Tom-curve commitments and announcements of the transfer (<a href="#transfer" class="auto internal xref">Section 5</a>), the prover messages of <code>SM</code> and <code>PA</code>, and the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> bound parameters -- remain to be specified, and <span class="bcp14">MUST</span> be pinned down (consistent with <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span>) before this profile is interoperable.
-The move structure of the sub-protocols is normative; the exact byte-level Fiat-Shamir inputs and complete composed protocol specification are deferred to a future revision.<a href="#section-9-5" class="pilcrow">¶</a></p>
+The move structure of the sub-protocols is normative; the exact byte-level Fiat-Shamir inputs and complete composed protocol specification are deferred to a future revision.<a href="#section-9-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="integration">

@@ -95,6 +95,7 @@ Table of Contents
      5.1.  Protocol
    6.  Reduction to Curve Operations
    7.  Scalar-Multiplication Proof
+     7.1.  Protocol
    8.  Point-Addition Proof
      8.1.  Affine Addition Constraints
      8.2.  Protocol
@@ -295,13 +296,12 @@ Table of Contents
    PoP = ( SM AND PA ) o group o commitment-transfer
 
    Each functionality is an honest-verifier zero-knowledge reduction.
-   In its non-interactive form, their composition is a five-round (i.e.
-   five-message) protocol between a prover and a verifier.  This
-   interactive protocol is then made non-interactive by applying the
-   Fiat-Shamir transform (Section 9), deriving every verifier challenge
-   from the transcript; the exact per-challenge transcript inputs remain
-   to be specified (see Section 9).  The result is a non-interactive
-   zero-knowledge proof of knowledge for (Eq. POP).
+   This composition in the reduction of knowledge framework is then made
+   non-interactive by applying the Fiat-Shamir transform (Section 9),
+   deriving every verifier challenge from the transcript; the exact per-
+   challenge transcript inputs remain to be specified (see Section 9).
+   The result is a non-interactive zero-knowledge proof of knowledge for
+   (Eq. POP).
 
 4.  Parameters and Encodings
 
@@ -469,15 +469,16 @@ Verifier checks (per limb i):
        *  Scalar multiplication: statement_SM = (C_Z, K), witness_SM =
           (Z, rho_Z, z), asserting Z = z*K.
 
-       *  Point addition: statement_PA = (C_Z, C_H, C_Q), witness_PA the
-          openings of the three commitments, asserting Z = Hpt + Q.
+       *  Point addition: statement_PA = (C_Q, C_H, C_Z), witness_PA the
+          openings of the three commitments, asserting Q + Hpt = Z
+          (equivalently Z = Hpt + Q, Eq. POP).
 
    Note that C_Q = (C_x, C_y) is a pair of coordinate commitments; the
    point-addition proof of Section 8 operates per coordinate.  Likewise
    C_Z and C_H are coordinate-commitment pairs.
 
-   The two output statements are then proved in a parallel AND-
-   composition: SM x PA.
+   The two output statements are then proved in a parallel composition:
+   SM x PA.
 
 7.  Scalar-Multiplication Proof
 
@@ -504,9 +505,61 @@ Verifier checks (per limb i):
    committed instances according to that bit; the point relation among
    the committed instances is established by invoking the point-addition
    proof PA (Section 8) in a parallel AND-composition.  The per-
-   execution protocol is that of [CDLS] (Construction for R_SM);
-   implementations MUST follow that specification, with the scalar
-   treated as a free witness as noted above.
+   execution protocol is that of [CDLS] (Construction for R_SM), with
+   the scalar treated as a free witness as noted above.
+
+7.1.  Protocol
+
+   The following is one execution, between prover P and verifier V;
+   lambda such executions run in parallel and share a single Fiat-Shamir
+   transcript (Section 9).  F_np is the scalar field of P-256, and
+   Commit~ the Tom commitment scheme of Section 5.
+
+   Prover P                                        Verifier V
+     inputs: Z, z, rho_Z   (Z = z*K)               inputs: C_Z, K
+
+     # sample a fresh "combined" instance
+     omega <- F_np \ {0, z, 2z}
+     Z'  = omega*K                  # public-scalar multiples of K
+     Z'' = (omega - z)*K
+     rho', rho'' <- Tom randomness
+     C'  = Commit~(Z';  rho')
+     C'' = Commit~(Z''; rho'')
+
+     # point-addition instance over the committed points,
+     # asserting  Z + Z'' = Z' :
+     #   statement_PA = (C_Z, C'', C')
+     #   witness_PA   = (Z, rho_Z, Z'', rho'', Z', rho')
+     # PA is run with the C[2]-opening dropped (see {{point-addition}})
+     msg_1 = announcement of PA on statement_PA
+                    ---     C', C'', msg_1     --->
+                    <---       b <- {0,1}      ---
+     msg_2 = response of PA under challenge b
+     if b = 0:  (alpha, tau) = (omega,       rho')
+     if b = 1:  (alpha, tau) = (omega - z,   rho'')
+                    ---   alpha, tau, msg_2    --->
+
+   Verifier checks:
+     (1)  PA on (C_Z, C'', C') accepts the transcript (msg_1, b, msg_2)
+     (2)  if b = 0:  C'  == Commit~(alpha*K; tau)
+          if b = 1:  C'' == Commit~(alpha*K; tau)
+
+   Because Z' = omega*K and Z'' = (omega - z)*K are public-scalar
+   multiples of K, the committed points satisfy Z + Z'' = z*K + (omega -
+   z)*K = omega*K = Z'; the point-addition proof PA (Section 8)
+   establishes this relation among C_Z, C'', C', and is run here with
+   the one-bit challenge b, which it shares with the opening (its
+   announcement and response are msg_1 and msg_2).  Inside this
+   composition PA drops its C[2] opening proof (the lines flagged omit
+   in SM in Section 8), since the opening of C_Z is recovered from the
+   two openings revealed across the b = 0 and b = 1 transcripts.  The
+   exclusion of {0, z, 2z} when sampling omega keeps Z, Z', Z'' non-
+   identity and pairwise non-opposite, so the non-degeneracy
+   precondition of Section 8 holds.  An extractor with accepting
+   responses for both b = 0 and b = 1 recovers alpha_0 = omega and
+   alpha_1 = omega - z, hence z = alpha_0 - alpha_1 and the opening of
+   C_Z as Z = z*K; revealing only one opening per execution gives
+   (statistical) honest-verifier zero knowledge.
 
    When expressed via [SIGMA], SM is a custom SigmaProtocol (not a plain
    LinearRelation): its challenge is a single bit and the protocol is
@@ -563,69 +616,79 @@ Verifier checks (per limb i):
    challenge c in F_q, and the prover sends a response.  The verifier
    accepts iff all checks below hold.
 
-   Prover P                                      Verifier V
-     inputs: a_x,a_y,b_x,b_y,t_x,t_y, r_1..r_6
-                                                 inputs: C[1..6]
+Prover P                                      Verifier V
+  inputs: a_x,a_y,b_x,b_y,t_x,t_y, r_1..r_6
+                                              inputs: C[1..6]
 
-     tau = (b_y - a_y)/(b_x - a_x);  r_tau <- F_q
-     C_tau = tau*G + r_tau*H
+  tau = (b_y - a_y)/(b_x - a_x);  r_tau <- F_q
+  C_tau = tau*G + r_tau*H
 
-     # masks
-     a_tau, a_rtau, a_f1, a_rf1, a_e1, a_e2 <- F_q
-     a_f3, a_rf3, a_e3 <- F_q
-     beta_2, beta_3, beta_4 <- F_q;   beta_1 <- F_q \ {0}
+  # masks
+  a_tau, a_rtau, a_f1, a_rf1, a_e1, a_e2 <- F_q
+  a_f3, a_rf3, a_e3 <- F_q
+  a_2, a_r2 <- F_q                 # omit in SM (opening of C[2])
+  beta_2, beta_3, beta_4 <- F_q;   beta_1 <- F_q \ {0}
 
-     T1 = a_tau*G + a_rtau*H
-     T2 = a_f1*G  + a_rf1*H
-     T3 = a_tau*C_f1 + a_e1*H
-     T4 = a_tau*C_tau + a_e2*H
-     T5 = a_f3*G  + a_rf3*H
-     T6 = a_f3*C_tau + a_e3*H
-     U1 = (beta_1*(b_x - a_x))*G
-     U2 = beta_2*C_f1 + beta_3*H
-     U3 = beta_4*G
-                     --- C_tau, T1..T6, U1, U2, U3 --->
-                     <---            c <- F_q        ---
-     z_tau  = a_tau + c*tau
-     z_rtau = a_rtau + c*r_tau
-     z_f1   = a_f1  + c*(b_x - a_x)
-     z_rf1  = a_rf1 + c*(r_3 - r_1)
-     z_e1   = a_e1  + c*((r_4 - r_2) - (r_3 - r_1)*tau)
-     z_e2   = a_e2  + c*((r_1 + r_3 + r_5) - r_tau*tau)
-     z_f3   = a_f3  + c*(a_x - t_x)
-     z_rf3  = a_rf3 + c*(r_1 - r_5)
-     z_e3   = a_e3  + c*((r_2 + r_6) - r_tau*(a_x - t_x))
-     v_1    = beta_2 + c*beta_1
-     v_2    = beta_3 - c*beta_1*(r_3 - r_1)
-     v_3    = beta_4 + c*beta_1*(b_x - a_x)
-                     ---  z_*, v_1, v_2, v_3  --->
+  T1 = a_tau*G + a_rtau*H
+  T2 = a_f1*G  + a_rf1*H
+  T3 = a_tau*C_f1 + a_e1*H
+  T4 = a_tau*C_tau + a_e2*H
+  T5 = a_f3*G  + a_rf3*H
+  T6 = a_f3*C_tau + a_e3*H
+  T7 = a_2*G   + a_r2*H            # omit in SM
+  U1 = (beta_1*(b_x - a_x))*G
+  U2 = beta_2*C_f1 + beta_3*H
+  U3 = beta_4*G
+                  --- C_tau, T1..T6, T7, U1, U2, U3 --->   # T7: omit in SM
+                  <---            c <- F_q        ---
+  z_tau  = a_tau + c*tau
+  z_rtau = a_rtau + c*r_tau
+  z_f1   = a_f1  + c*(b_x - a_x)
+  z_rf1  = a_rf1 + c*(r_3 - r_1)
+  z_e1   = a_e1  + c*((r_4 - r_2) - (r_3 - r_1)*tau)
+  z_e2   = a_e2  + c*((r_1 + r_3 + r_5) - r_tau*tau)
+  z_f3   = a_f3  + c*(a_x - t_x)
+  z_rf3  = a_rf3 + c*(r_1 - r_5)
+  z_e3   = a_e3  + c*((r_2 + r_6) - r_tau*(a_x - t_x))
+  z_2    = a_2   + c*a_y           # omit in SM
+  z_r2   = a_r2  + c*r_2           # omit in SM
+  v_1    = beta_2 + c*beta_1
+  v_2    = beta_3 - c*beta_1*(r_3 - r_1)
+  v_3    = beta_4 + c*beta_1*(b_x - a_x)
+                  ---  z_*, v_1, v_2, v_3  --->
 
-   Verifier checks:
-     (1)  z_tau*G + z_rtau*H   == T1 + c*C_tau
-     (2)  z_f1*G  + z_rf1*H    == T2 + c*C_f1
-     (3)  z_tau*C_f1 + z_e1*H  == T3 + c*C_p1
-     (4)  z_tau*C_tau + z_e2*H == T4 + c*C_p2
-     (5)  z_f3*G  + z_rf3*H    == T5 + c*C_f3
-     (6)  z_f3*C_tau + z_e3*H  == T6 + c*C_p3
-     (8)  U1 != identity
-     (9)  c*U1 + U3 == v_3*G
-     (10) c*U1 + U2 == v_1*C_f1 + v_2*H
+Verifier checks:
+  (1)  z_tau*G + z_rtau*H   == T1 + c*C_tau
+  (2)  z_f1*G  + z_rf1*H    == T2 + c*C_f1
+  (3)  z_tau*C_f1 + z_e1*H  == T3 + c*C_p1
+  (4)  z_tau*C_tau + z_e2*H == T4 + c*C_p2
+  (5)  z_f3*G  + z_rf3*H    == T5 + c*C_f3
+  (6)  z_f3*C_tau + z_e3*H  == T6 + c*C_p3
+  (7)  z_2*G   + z_r2*H     == T7 + c*C[2]      # omit in SM
+  (8)  U1 != identity
+  (9)  c*U1 + U3 == v_3*G
+  (10) c*U1 + U2 == v_1*C_f1 + v_2*H
 
    Checks (1)-(2) and (5) are openings; checks (3)-(4) and (6) prove the
    multiplicative / squaring constraints (C1)-(C3) (check (4) is a
-   squaring proof realizing constraint (C2)); checks (8)-(10) are the
-   non-zero proof for C_f1, establishing b_x - a_x != 0 and hence P_1 !=
-   +-P_2.
+   squaring proof realizing constraint (C2)); check (7) is the opening
+   proof of C[2], the y-coordinate commitment of P_1; and checks
+   (8)-(10) are the non-zero proof for C_f1, establishing b_x - a_x != 0
+   and hence P_1 != +-P_2.
 
-      Note on optimizations (from [PAPER]): constraint (C2) uses a
-      dedicated squaring proof rather than a generic multiplication
-      proof; the mask (a_tau, a_rtau) of C_tau is shared across the
-      three coordinate proofs; and the standalone opening proof of C[2]
-      is omitted when PA is composed inside SM (the witness may be
-      extracted with additional help from the openings in the
-      transcript, see [PAPER]).  When PA is used standalone, an
-      additional check (7) z_2*G + z_r2*H == T7 + c*C[2] (with
-      corresponding masks a_2, a_r2 and message T7) MUST be included.
+   The lines flagged omit in SM -- the masks a_2, a_r2, the announcement
+   T7, the responses z_2, z_r2, and check (7) -- together form the
+   opening proof of C[2].  They are REQUIRED when PA is used standalone,
+   as in the SM x PA composition of Section 6 that proves Z = Hpt + Q.
+   They are dropped when PA is composed inside SM (Section 7): there the
+   opening of C[2] is instead extracted from the two colliding
+   transcripts of the bit-challenge execution (Optimisation 3 of
+   [PAPER]), so proving it again would be redundant.
+
+      Note on further optimizations (from [PAPER]): constraint (C2) uses
+      a dedicated squaring proof rather than a generic multiplication
+      proof, and the mask (a_tau, a_rtau) of C_tau is shared across the
+      three coordinate proofs.
 
 8.3.  Expressing PA via the Sigma-Protocols Interface
 
@@ -666,9 +729,6 @@ Verifier checks (per limb i):
 
    *  for the bound presentation context, the challenge octets supplied
       by the calling protocol (see Section 10).
-
-   All parallel repetitions of SM and the parallel SM x PA AND-
-   composition share a single Fiat-Shamir transcript.
 
    The exact Fiat-Shamir binding for the composed protocol is not yet
    fixed by this document.  In particular, the precise inputs absorbed
