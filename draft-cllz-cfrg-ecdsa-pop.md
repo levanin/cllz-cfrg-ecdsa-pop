@@ -216,19 +216,22 @@ Throughout, lowercase letters denote scalars and uppercase letters denote group 
 
 # Overview
 
-The holder possesses an ECDSA key pair `(x, Q)` with `Q = x*P` over P-256, where `Q` has been certified inside a credential (e.g., as committed BBS messages).
-The device public key MAY be carried into the credential as a *committed message* via blind issuance ({{BLIND-BBS}}), so that the issuer signs over `Q` without learning it; in that case the Pedersen commitment to `Q` produced during issuance is the input to the transfer of {{transfer}}.
-At presentation time the verifier supplies a fresh nonce `nonce`; the holder uses the secure element to produce an ECDSA signature on `nonce` and then proves, in zero knowledge, that it knows such a signature under the committed key `Q`, without revealing `Q`.
+In this system there are three parties: a holder, who holds a credential and possesses an ECDSA-based device key pair; an issuer, who issues credentials; and a verifier, who verifies credentials and their binding to devices.
+The holder has a device ECDSA key pair (`private_key = x`, `public_key = Q`), where `Q = x*P` over P-256. This public key is included in the holder's credential (e.g., as a committed BBS message).
+The public key MAY be carried into the credential as a committed message via blind issuance ({{BLIND-BBS}}), that is, in hidden form, so that the issuer signs over `Q` without learning it. This case requires the additional functionality described in {{transfer}}.
+When presenting a credential, the verifier supplies a fresh `nonce`. The holder uses the secure element to produce an ECDSA signature over `nonce` with the device key pair, then proves in zero knowledge that it knows a valid signature under the committed key `Q`, without revealing `Q`.
 
-As shown in {{ZKATTEST}}, an ECDSA signature `(r, s)` on a message can be deterministically rewritten as a pair `(K, z)` with `r = F(K)`, and `z = r^{-1} * s mod n_p`.
-Verification then reduces to checking
+In order to instantiate this functionality, we rewrite how ECDSA signatures (which are of the form `(r, s)`) look like.
+As shown in {{ZKATTEST}}, an ECDSA signature on a message `msg` can be rewritten as a pair `(K, z)` with `r = F(K)`, and `z = r^{-1} * s mod n_p`.
+The verification then reduces to checking (where `P` is a fixed generator):
 
 ~~~
-z*K = H(m) * r^{-1} * P + Q
+z*K = H(msg) * r^{-1} * P + Q
 ~~~
 
-Because the signature is fresh and single-use, the value `K` MAY be revealed as part of the statement without harming unlinkability; only the long-lived public key `Q` must stay hidden.
-Setting
+Because the signature is fresh and single-use, the value `K` MAY be revealed without harming unlinkability; only the long-lived device public key `Q` must stay hidden.
+The purpose now is to prove that one knows a valid signature of the form above without revealing the underlying `Q` (this is the purpose of our PoP).
+By setting:
 
 ~~~
 alpha = H(nonce) * F(K)^{-1}  mod n_p          (a public scalar)
@@ -241,28 +244,28 @@ the statement to be proved becomes: knowledge of a scalar `z` and an opening of 
 z*K = Hpt + Q                                  (Eq. POP)
 ~~~
 
-This is a computation over P-256 with `K`, `Hpt` public, `z` secret, and `Q` committed.
+The computation is over P-256. `K`, `Hpt` are public; `z` and `Q` are secret.
 
-The PoP proves (Eq. POP) in three reductions, run between prover P (holder) and verifier V (relying party):
+The PoP proves (Eq. POP) can be interpreted as three functionalities, each ran between prover (holder) and verifier (relying party):
 
 1. Commitment transfer ({{transfer}}).
    Transfer the commitment to `Q` from the credential curve to the Tom curve, where P-256 coordinate arithmetic is native.
-   After this step `Q = (x, y)` is committed as two Tom Pedersen commitments `C_x = Commit(x; rho_x)`, `C_y = Commit(y; rho_y)`.
+   After this step `Q = (x, y)` is committed as two Tom Pedersen commitments `C_x = Commit(x; rho_x)` (to the `x` coordinate), `C_y = Commit(y; rho_y)` (to the `y` coordinate).
 
 2. Reduction to curve operations ({{rok-group}}).
-   Introduce `Z = z*K` and its commitment `C_Z`, and split (Eq. POP) into a scalar-multiplication statement (`Z = z*K`) and a point-addition statement (`Z = Hpt + Q`).
+   Set `Z = z*K` and commit to it to generate `C_Z`. Then, split Eq. POP into two statements: i. a scalar-multiplication statement (`Z = z*K`) and ii. a point-addition statement (`Z = Hpt + Q`).
 
 3. Curve-operation proofs.
-   Prove the two statements with the Sigma protocols of {{scalar-mult}} (scalar multiplication) and {{point-addition}} (point addition), run in parallel.
+   Prove the two statements with the Sigma protocols of {{scalar-mult}} (scalar multiplication -SM-) and {{point-addition}} (point addition -PA-), run in parallel.
 
-Symbolically, with `x` denoting parallel AND-composition and `o` sequential composition of reductions (see {{RoK}}):
+Symbolically, with `o` meaning sequential composition of functionalities (see {{RoK}}), our PoP is:
 
 ~~~
-PoP = ( SM x PA ) o group o transfer
+PoP = ( SM AND PA ) o group o commitment-transfer
 ~~~
 
-Each step is an honest-verifier zero-knowledge, public-coin reduction.
-Unrolled, their composition is a five-round (i.e. five-message) public-coin interactive protocol between prover and verifier where the commitment/response flows of the underlying protocols interleave into five moves.
+Each functionality is an honest-verifier zero-knowledge reduction.
+In its non-interactive form, their composition is a five-round (i.e. five-message) protocol between a prover and a verifier.
 This interactive protocol is then made non-interactive by applying the Fiat-Shamir transform ({{fiat-shamir}}), deriving every verifier challenge from the transcript; the exact per-challenge transcript inputs remain to be specified (see {{fiat-shamir}}).
 The result is a non-interactive zero-knowledge proof of knowledge for (Eq. POP).
 
