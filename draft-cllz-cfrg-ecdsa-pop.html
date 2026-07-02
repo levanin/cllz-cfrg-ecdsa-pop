@@ -10,9 +10,9 @@
 <meta content="Shai Levin" name="author">
 <meta content="Alexandros Zacharakis" name="author">
 <meta content='
-       This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature   produced under a committed public key over the NIST P-256 (secp256r1) curve.
+       This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature produced under a committed public key over the NIST P-256 (secp256r1) curve.
 The PoP lets a credential holder prove, in zero knowledge, that it can produce a fresh ECDSA signature under a device public key without revealing that key, thereby providing device binding for privacy-preserving credentials whose presentation must remain unlinkable. 
-       The construction is built exclusively from Sigma protocols   as it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
+       The construction is built exclusively from Sigma protocols as it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
 It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to serve as the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
 SNARK-based realizations of the same relation are out of scope. 
     ' name="description">
@@ -1098,9 +1098,9 @@ svg {
 <h1 id="title">Schnorr-Type Proofs of Possession for ECDSA Device Binding</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature <span>[<a href="#FIPS186-5" class="cite xref">FIPS186-5</a>]</span> produced under a committed public key over the NIST P-256 (secp256r1) curve.
+<p id="section-abstract-1">This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature produced under a committed public key over the NIST P-256 (secp256r1) curve.
 The PoP lets a credential holder prove, in zero knowledge, that it can produce a fresh ECDSA signature under a device public key without revealing that key, thereby providing device binding for privacy-preserving credentials whose presentation must remain unlinkable.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">The construction is built exclusively from Sigma protocols <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span> as it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
+<p id="section-abstract-2">The construction is built exclusively from Sigma protocols as it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
 It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to serve as the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
 SNARK-based realizations of the same relation are out of scope.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 </section>
@@ -1383,7 +1383,7 @@ z*K = Hpt + Q                                  (Eq. POP)
 </pre><a href="#section-3-7" class="pilcrow">¶</a>
 </div>
 <p id="section-3-8">The computation is over P-256. <code>K</code>, <code>Hpt</code> are public; <code>z</code> and <code>Q</code> are secret.<a href="#section-3-8" class="pilcrow">¶</a></p>
-<p id="section-3-9">The PoP proves (Eq. POP) can be interpreted as three functionalities, each ran between prover (holder) and verifier (relying party):<a href="#section-3-9" class="pilcrow">¶</a></p>
+<p id="section-3-9">The PoP for (Eq. POP) can be interpreted as three functionalities, each run between prover (holder) and verifier (relying party):<a href="#section-3-9" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-3-10">
 <li id="section-3-10.1">
           <p id="section-3-10.1.1">Commitment transfer (<a href="#transfer" class="auto internal xref">Section 5</a>).
@@ -1396,13 +1396,13 @@ Set <code>Z = z*K</code> and commit to it to generate <code>C_Z</code>. Then, sp
 </li>
         <li id="section-3-10.3">
           <p id="section-3-10.3.1">Curve-operation proofs.
-Prove the two statements with the Sigma protocols of <a href="#scalar-mult" class="auto internal xref">Section 7</a> (scalar multiplication -SM-) and <a href="#point-addition" class="auto internal xref">Section 8</a> (point addition -PA-), run in parallel.<a href="#section-3-10.3.1" class="pilcrow">¶</a></p>
+Prove the two statements with the Sigma protocols of <a href="#scalar-mult" class="auto internal xref">Section 7</a> (scalar multiplication, <code>SM</code>) and <a href="#point-addition" class="auto internal xref">Section 8</a> (point addition, <code>PA</code>), run in parallel.<a href="#section-3-10.3.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
-<p id="section-3-11">Symbolically, with <code>o</code> meaning sequential composition of functionalities (see <span>[<a href="#RoK" class="cite xref">RoK</a>]</span>), our PoP is:<a href="#section-3-11" class="pilcrow">¶</a></p>
+<p id="section-3-11">Symbolically, with <code>x</code> denoting parallel (AND) composition and <code>o</code> sequential composition of functionalities (see <span>[<a href="#RoK" class="cite xref">RoK</a>]</span>), our PoP is:<a href="#section-3-11" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3-12">
 <pre>
-PoP = ( SM AND PA ) o group o commitment-transfer
+PoP = ( SM x PA ) o group o transfer
 </pre><a href="#section-3-12" class="pilcrow">¶</a>
 </div>
 <p id="section-3-13">Each functionality is an honest-verifier zero-knowledge reduction.
@@ -1530,7 +1530,7 @@ C_x = Commit~(x; rho_x),    C_y = Commit~(y; rho_y)
 </pre><a href="#section-5.1-6" class="pilcrow">¶</a>
 </div>
 <p id="section-5.1-7">These two commitments, together denoted <code>C_Q</code>, are the output statement of the reduction and the committed form of <code>Q</code> used by the remaining proofs.<a href="#section-5.1-7" class="pilcrow">¶</a></p>
-<p id="section-5.1-8">This document adopts 128-bit limbs (and the parameters <code>b_m = 128, b_c = 112,b_f = 8</code>) for the transfer, as in <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>: this minimizes the number of cross-group instances, and with the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> parameters achieves 112-bit security.
+<p id="section-5.1-8">This document adopts 128-bit limbs (and the parameters <code>b_m = 128, b_c = 112, b_f = 8</code>) for the transfer, as in <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>: this minimizes the number of cross-group instances, and with the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> parameters achieves 112-bit security.
 Smaller limbs (e.g. 64-bit) work equally well -- they leave more headroom below <code>min(|F_s|, |F_q|)</code> and so can reach higher soundness -- at the cost of proportionally more cross-group instances; profiles with stricter requirements <span class="bcp14">SHOULD</span> adjust the limb size and repetition accordingly.<a href="#section-5.1-8" class="pilcrow">¶</a></p>
 </section>
 </div>

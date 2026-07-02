@@ -19,15 +19,15 @@ Expires: 3 January 2027                         Hasso Plattner Institute
 Abstract
 
    This document specifies a Schnorr-type, circuit-free zero-knowledge
-   proof of possession (PoP) of an ECDSA signature [FIPS186-5] produced
-   under a committed public key over the NIST P-256 (secp256r1) curve.
-   The PoP lets a credential holder prove, in zero knowledge, that it
-   can produce a fresh ECDSA signature under a device public key without
+   proof of possession (PoP) of an ECDSA signature produced under a
+   committed public key over the NIST P-256 (secp256r1) curve.  The PoP
+   lets a credential holder prove, in zero knowledge, that it can
+   produce a fresh ECDSA signature under a device public key without
    revealing that key, thereby providing device binding for privacy-
    preserving credentials whose presentation must remain unlinkable.
 
-   The construction is built exclusively from Sigma protocols [SIGMA] as
-   it decomposes the ECDSA verification equation into a scalar-
+   The construction is built exclusively from Sigma protocols as it
+   decomposes the ECDSA verification equation into a scalar-
    multiplication relation and a point-addition relation over P-256,
    each proved with a dedicated Sigma protocol over a companion ("Tom")
    curve whose scalar field equals the base field of P-256.  It is
@@ -271,8 +271,8 @@ Table of Contents
    The computation is over P-256.  K, Hpt are public; z and Q are
    secret.
 
-   The PoP proves (Eq. POP) can be interpreted as three functionalities,
-   each ran between prover (holder) and verifier (relying party):
+   The PoP for (Eq. POP) can be interpreted as three functionalities,
+   each run between prover (holder) and verifier (relying party):
 
    1.  Commitment transfer (Section 5).  Transfer the commitment to Q
        from the credential curve to the Tom curve, where P-256
@@ -287,13 +287,13 @@ Table of Contents
        ii. a point-addition statement (Z = Hpt + Q).
 
    3.  Curve-operation proofs.  Prove the two statements with the Sigma
-       protocols of Section 7 (scalar multiplication -SM-) and Section 8
-       (point addition -PA-), run in parallel.
+       protocols of Section 7 (scalar multiplication, SM) and Section 8
+       (point addition, PA), run in parallel.
 
-   Symbolically, with o meaning sequential composition of
-   functionalities (see [RoK]), our PoP is:
+   Symbolically, with x denoting parallel (AND) composition and o
+   sequential composition of functionalities (see [RoK]), our PoP is:
 
-   PoP = ( SM AND PA ) o group o commitment-transfer
+   PoP = ( SM x PA ) o group o transfer
 
    Each functionality is an honest-verifier zero-knowledge reduction.
    This composition in the reduction of knowledge framework is then made
@@ -436,7 +436,7 @@ Verifier checks (per limb i):
    proofs.
 
    This document adopts 128-bit limbs (and the parameters b_m = 128, b_c
-   = 112,b_f = 8) for the transfer, as in [PAPER]: this minimizes the
+   = 112, b_f = 8) for the transfer, as in [PAPER]: this minimizes the
    number of cross-group instances, and with the [OKMZ] parameters
    achieves 112-bit security.  Smaller limbs (e.g. 64-bit) work equally
    well -- they leave more headroom below min(|F_s|, |F_q|) and so can
