@@ -1495,7 +1495,7 @@ b_m + b_c + b_f  &lt;  log2( min(|F_s|, |F_q|) )
 <div class="alignLeft art-text artwork" id="section-5.1-4">
 <pre>
 Prover P                                  Verifier V
-  inputs: m_i, rho_i      (0 &lt;= m_i &lt; 2^b_m)   inputs: C_i = m_i*g + rho_i*h
+  inputs: m_i, rho_i  (0 &lt;= m_i &lt; 2^b_m)  inputs: C_i = m_i*g + rho_i*h
 
   # 1. new commitment: reduce the statement to Tom
   rho~_i &lt;- F_q
@@ -1517,9 +1517,9 @@ Prover P                                  Verifier V
                  ---       z_i, s_i, s~_i       ---&gt;
 
 Verifier checks (per limb i):
-  (1)  z_i*g   + s_i*h    == A_i  + c*C_i        # opening, credential curve
-  (2)  z_i*G_t + s~_i*H_t == A~_i + c*C~_i       # opening, Tom curve
-  (3)  z_i in R                                  # range bound: no wraparound
+  (1)  z_i*g   + s_i*h    == A_i  + c*C_i   # open, cred curve
+  (2)  z_i*G_t + s~_i*H_t == A~_i + c*C~_i  # open, Tom curve
+  (3)  z_i in R                             # range: no wraparound
 </pre><a href="#section-5.1-4" class="pilcrow">¶</a>
 </div>
 <p id="section-5.1-5">The abort in step 3 is the rejection sampling of <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span>; the admissible range <code>R</code> and the exact bound widths are those of <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span>, to which implementations <span class="bcp14">MUST</span> conform.
@@ -1717,7 +1717,7 @@ Prover P                                      Verifier V
   U1 = (beta_1*(b_x - a_x))*G
   U2 = beta_2*C_f1 + beta_3*H
   U3 = beta_4*G
-                  --- C_tau, T1..T6, T7, U1, U2, U3 ---&gt;   # T7: omit in SM
+                  --- C_tau, T1..T6, T7, U1..U3 ---&gt;   # T7: omit in SM
                   &lt;---            c &lt;- F_q        ---
   z_tau  = a_tau + c*tau
   z_rtau = a_rtau + c*r_tau

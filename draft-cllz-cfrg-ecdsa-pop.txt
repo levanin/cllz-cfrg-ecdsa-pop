@@ -395,32 +395,32 @@ Table of Contents
    so that every value below stays an integer in both scalar fields (no
    wraparound).
 
-Prover P                                  Verifier V
-  inputs: m_i, rho_i      (0 <= m_i < 2^b_m)   inputs: C_i = m_i*g + rho_i*h
+ Prover P                                  Verifier V
+   inputs: m_i, rho_i  (0 <= m_i < 2^b_m)  inputs: C_i = m_i*g + rho_i*h
 
-  # 1. new commitment: reduce the statement to Tom
-  rho~_i <- F_q
-  C~_i = m_i*G_t + rho~_i*H_t
-                 ---            C~_i            --->
+   # 1. new commitment: reduce the statement to Tom
+   rho~_i <- F_q
+   C~_i = m_i*G_t + rho~_i*H_t
+                  ---            C~_i            --->
 
-  # 2. announcement: bounded masks in both groups
-  k_i  <- { 0, ..., 2^(b_m + b_c + b_f) - 1 }
-  t_i  <- F_s;   t~_i <- F_q
-  A_i  = k_i*g   + t_i*h
-  A~_i = k_i*G_t + t~_i*H_t
-                 ---         A_i, A~_i          --->
-                 <---   c <- {0,...,2^b_c - 1}  ---
-  # 3. bounded response (z_i over the integers)
-  z_i  = k_i  + c*m_i
-  s_i  = t_i  + c*rho_i        (in F_s)
-  s~_i = t~_i + c*rho~_i       (in F_q)
-  if z_i outside the admissible range R: abort and restart
-                 ---       z_i, s_i, s~_i       --->
+   # 2. announcement: bounded masks in both groups
+   k_i  <- { 0, ..., 2^(b_m + b_c + b_f) - 1 }
+   t_i  <- F_s;   t~_i <- F_q
+   A_i  = k_i*g   + t_i*h
+   A~_i = k_i*G_t + t~_i*H_t
+                  ---         A_i, A~_i          --->
+                  <---   c <- {0,...,2^b_c - 1}  ---
+   # 3. bounded response (z_i over the integers)
+   z_i  = k_i  + c*m_i
+   s_i  = t_i  + c*rho_i        (in F_s)
+   s~_i = t~_i + c*rho~_i       (in F_q)
+   if z_i outside the admissible range R: abort and restart
+                  ---       z_i, s_i, s~_i       --->
 
-Verifier checks (per limb i):
-  (1)  z_i*g   + s_i*h    == A_i  + c*C_i        # opening, credential curve
-  (2)  z_i*G_t + s~_i*H_t == A~_i + c*C~_i       # opening, Tom curve
-  (3)  z_i in R                                  # range bound: no wraparound
+ Verifier checks (per limb i):
+   (1)  z_i*g   + s_i*h    == A_i  + c*C_i   # open, cred curve
+   (2)  z_i*G_t + s~_i*H_t == A~_i + c*C~_i  # open, Tom curve
+   (3)  z_i in R                             # range: no wraparound
 
    The abort in step 3 is the rejection sampling of [OKMZ]; the
    admissible range R and the exact bound widths are those of [OKMZ], to
@@ -620,58 +620,58 @@ Verifier checks (per limb i):
    challenge c in F_q, and the prover sends a response.  The verifier
    accepts iff all checks below hold.
 
-Prover P                                      Verifier V
-  inputs: a_x,a_y,b_x,b_y,t_x,t_y, r_1..r_6
-                                              inputs: C[1..6]
+ Prover P                                      Verifier V
+   inputs: a_x,a_y,b_x,b_y,t_x,t_y, r_1..r_6
+                                               inputs: C[1..6]
 
-  tau = (b_y - a_y)/(b_x - a_x);  r_tau <- F_q
-  C_tau = tau*G + r_tau*H
+   tau = (b_y - a_y)/(b_x - a_x);  r_tau <- F_q
+   C_tau = tau*G + r_tau*H
 
-  # masks
-  a_tau, a_rtau, a_f1, a_rf1, a_e1, a_e2 <- F_q
-  a_f3, a_rf3, a_e3 <- F_q
-  a_2, a_r2 <- F_q                 # omit in SM (opening of C[2])
-  beta_2, beta_3, beta_4 <- F_q;   beta_1 <- F_q \ {0}
+   # masks
+   a_tau, a_rtau, a_f1, a_rf1, a_e1, a_e2 <- F_q
+   a_f3, a_rf3, a_e3 <- F_q
+   a_2, a_r2 <- F_q                 # omit in SM (opening of C[2])
+   beta_2, beta_3, beta_4 <- F_q;   beta_1 <- F_q \ {0}
 
-  T1 = a_tau*G + a_rtau*H
-  T2 = a_f1*G  + a_rf1*H
-  T3 = a_tau*C_f1 + a_e1*H
-  T4 = a_tau*C_tau + a_e2*H
-  T5 = a_f3*G  + a_rf3*H
-  T6 = a_f3*C_tau + a_e3*H
-  T7 = a_2*G   + a_r2*H            # omit in SM
-  U1 = (beta_1*(b_x - a_x))*G
-  U2 = beta_2*C_f1 + beta_3*H
-  U3 = beta_4*G
-                  --- C_tau, T1..T6, T7, U1, U2, U3 --->   # T7: omit in SM
-                  <---            c <- F_q        ---
-  z_tau  = a_tau + c*tau
-  z_rtau = a_rtau + c*r_tau
-  z_f1   = a_f1  + c*(b_x - a_x)
-  z_rf1  = a_rf1 + c*(r_3 - r_1)
-  z_e1   = a_e1  + c*((r_4 - r_2) - (r_3 - r_1)*tau)
-  z_e2   = a_e2  + c*((r_1 + r_3 + r_5) - r_tau*tau)
-  z_f3   = a_f3  + c*(a_x - t_x)
-  z_rf3  = a_rf3 + c*(r_1 - r_5)
-  z_e3   = a_e3  + c*((r_2 + r_6) - r_tau*(a_x - t_x))
-  z_2    = a_2   + c*a_y           # omit in SM
-  z_r2   = a_r2  + c*r_2           # omit in SM
-  v_1    = beta_2 + c*beta_1
-  v_2    = beta_3 - c*beta_1*(r_3 - r_1)
-  v_3    = beta_4 + c*beta_1*(b_x - a_x)
-                  ---  z_*, v_1, v_2, v_3  --->
+   T1 = a_tau*G + a_rtau*H
+   T2 = a_f1*G  + a_rf1*H
+   T3 = a_tau*C_f1 + a_e1*H
+   T4 = a_tau*C_tau + a_e2*H
+   T5 = a_f3*G  + a_rf3*H
+   T6 = a_f3*C_tau + a_e3*H
+   T7 = a_2*G   + a_r2*H            # omit in SM
+   U1 = (beta_1*(b_x - a_x))*G
+   U2 = beta_2*C_f1 + beta_3*H
+   U3 = beta_4*G
+                   --- C_tau, T1..T6, T7, U1..U3 --->   # T7: omit in SM
+                   <---            c <- F_q        ---
+   z_tau  = a_tau + c*tau
+   z_rtau = a_rtau + c*r_tau
+   z_f1   = a_f1  + c*(b_x - a_x)
+   z_rf1  = a_rf1 + c*(r_3 - r_1)
+   z_e1   = a_e1  + c*((r_4 - r_2) - (r_3 - r_1)*tau)
+   z_e2   = a_e2  + c*((r_1 + r_3 + r_5) - r_tau*tau)
+   z_f3   = a_f3  + c*(a_x - t_x)
+   z_rf3  = a_rf3 + c*(r_1 - r_5)
+   z_e3   = a_e3  + c*((r_2 + r_6) - r_tau*(a_x - t_x))
+   z_2    = a_2   + c*a_y           # omit in SM
+   z_r2   = a_r2  + c*r_2           # omit in SM
+   v_1    = beta_2 + c*beta_1
+   v_2    = beta_3 - c*beta_1*(r_3 - r_1)
+   v_3    = beta_4 + c*beta_1*(b_x - a_x)
+                   ---  z_*, v_1, v_2, v_3  --->
 
-Verifier checks:
-  (1)  z_tau*G + z_rtau*H   == T1 + c*C_tau
-  (2)  z_f1*G  + z_rf1*H    == T2 + c*C_f1
-  (3)  z_tau*C_f1 + z_e1*H  == T3 + c*C_p1
-  (4)  z_tau*C_tau + z_e2*H == T4 + c*C_p2
-  (5)  z_f3*G  + z_rf3*H    == T5 + c*C_f3
-  (6)  z_f3*C_tau + z_e3*H  == T6 + c*C_p3
-  (7)  z_2*G   + z_r2*H     == T7 + c*C[2]      # omit in SM
-  (8)  U1 != identity
-  (9)  c*U1 + U3 == v_3*G
-  (10) c*U1 + U2 == v_1*C_f1 + v_2*H
+ Verifier checks:
+   (1)  z_tau*G + z_rtau*H   == T1 + c*C_tau
+   (2)  z_f1*G  + z_rf1*H    == T2 + c*C_f1
+   (3)  z_tau*C_f1 + z_e1*H  == T3 + c*C_p1
+   (4)  z_tau*C_tau + z_e2*H == T4 + c*C_p2
+   (5)  z_f3*G  + z_rf3*H    == T5 + c*C_f3
+   (6)  z_f3*C_tau + z_e3*H  == T6 + c*C_p3
+   (7)  z_2*G   + z_r2*H     == T7 + c*C[2]      # omit in SM
+   (8)  U1 != identity
+   (9)  c*U1 + U3 == v_3*G
+   (10) c*U1 + U2 == v_1*C_f1 + v_2*H
 
    Checks (1)-(2) and (5) are openings; checks (3)-(4) and (6) prove the
    multiplicative / squaring constraints (C1)-(C3) (check (4) is a
