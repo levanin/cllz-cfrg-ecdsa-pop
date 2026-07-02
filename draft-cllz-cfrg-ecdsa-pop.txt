@@ -504,16 +504,20 @@ Verifier checks (per limb i):
    replies with a challenge bit, and the prover opens one of two related
    committed instances according to that bit; the point relation among
    the committed instances is established by invoking the point-addition
-   proof PA (Section 8) in a parallel AND-composition.  The per-
-   execution protocol is that of [CDLS] (Construction for R_SM), with
-   the scalar treated as a free witness as noted above.
+   proof internally.  The per-execution protocol is that of [CDLS]
+   (Construction for R_SM), with the scalar treated as a free witness as
+   noted above.
 
 7.1.  Protocol
 
    The following is one execution, between prover P and verifier V;
    lambda such executions run in parallel and share a single Fiat-Shamir
    transcript (Section 9).  F_np is the scalar field of P-256, and
-   Commit~ the Tom commitment scheme of Section 5.
+   Commit~ the Tom commitment scheme of Section 5.  As in Section 6 and
+   Section 8, each Commit~ to a P-256 point is a pair of coordinate
+   commitments -- one to the x and one to the y coordinate -- so C_Z,
+   C', and C'' are coordinate-commitment pairs, and the openings (rho_Z,
+   rho', rho'', tau) and check (2) are taken per coordinate.
 
    Prover P                                        Verifier V
      inputs: Z, z, rho_Z   (Z = z*K)               inputs: C_Z, K

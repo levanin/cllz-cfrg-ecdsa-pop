@@ -1591,7 +1591,7 @@ R_SM = { ((C_Z, K) ; Z, rho_Z, z) :
 <p id="section-7-4"><code>SM</code> is the scalar-multiplication proof of CDLS <span>[<a href="#CDLS" class="cite xref">CDLS</a>]</span>, used here with one modification from <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>: the original protocol additionally committed to the scalar, whereas here <code>z</code> is a free (uncommitted) witness, which improves efficiency.<a href="#section-7-4" class="pilcrow">¶</a></p>
 <p id="section-7-5">It is a bit-challenge Schnorr-type proof: a single execution uses a one-bit verifier challenge and has knowledge-soundness error <code>1/2</code>.
 To reach error <code>2^-lambda</code>, <code>lambda</code> independent executions are run in parallel (<code>lambda = 128</code> is <span class="bcp14">RECOMMENDED</span>).
-In one execution, the prover derives from its witness an auxiliary ("combined") instance using fresh randomness, sends the corresponding commitments, the verifier replies with a challenge bit, and the prover opens one of two related committed instances according to that bit; the point relation among the committed instances is established by invoking the point-addition proof <code>PA</code> (<a href="#point-addition" class="auto internal xref">Section 8</a>) in a parallel AND-composition.
+In one execution, the prover derives from its witness an auxiliary ("combined") instance using fresh randomness, sends the corresponding commitments, the verifier replies with a challenge bit, and the prover opens one of two related committed instances according to that bit; the point relation among the committed instances is established by invoking the point-addition proof internally.
 The per-execution protocol is that of <span>[<a href="#CDLS" class="cite xref">CDLS</a>]</span> (Construction for <code>R_SM</code>), with the scalar treated as a free witness as noted above.<a href="#section-7-5" class="pilcrow">¶</a></p>
 <div id="protocol-1">
 <section id="section-7.1">
@@ -1599,7 +1599,8 @@ The per-execution protocol is that of <span>[<a href="#CDLS" class="cite xref">C
 <a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-protocol-2" class="section-name selfRef">Protocol</a>
         </h3>
 <p id="section-7.1-1">The following is one execution, between prover <code>P</code> and verifier <code>V</code>; <code>lambda</code> such executions run in parallel and share a single Fiat-Shamir transcript (<a href="#fiat-shamir" class="auto internal xref">Section 9</a>).
-<code>F_np</code> is the scalar field of P-256, and <code>Commit~</code> the Tom commitment scheme of <a href="#transfer" class="auto internal xref">Section 5</a>.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<code>F_np</code> is the scalar field of P-256, and <code>Commit~</code> the Tom commitment scheme of <a href="#transfer" class="auto internal xref">Section 5</a>.
+As in <a href="#rok-group" class="auto internal xref">Section 6</a> and <a href="#point-addition" class="auto internal xref">Section 8</a>, each <code>Commit~</code> to a P-256 point is a pair of coordinate commitments -- one to the <code>x</code> and one to the <code>y</code> coordinate -- so <code>C_Z</code>, <code>C'</code>, and <code>C''</code> are coordinate-commitment pairs, and the openings (<code>rho_Z</code>, <code>rho'</code>, <code>rho''</code>, <code>tau</code>) and check (2) are taken per coordinate.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-7.1-2">
 <pre>
 Prover P                                        Verifier V
