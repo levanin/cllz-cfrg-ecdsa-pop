@@ -147,10 +147,10 @@ informative:
 
 --- abstract
 
-This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature {{FIPS186-5}} produced under a committed public key over the NIST P-256 (secp256r1) curve.
+This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature produced under a committed public key over the NIST P-256 (secp256r1) curve.
 The PoP lets a credential holder prove, in zero knowledge, that it can produce a fresh ECDSA signature under a device public key without revealing that key, thereby providing device binding for privacy-preserving credentials whose presentation must remain unlinkable.
 
-The construction is built exclusively from Sigma protocols {{SIGMA}} as it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
+The construction is built exclusively from Sigma protocols as it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
 It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to serve as the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
 SNARK-based realizations of the same relation are out of scope.
 
@@ -246,7 +246,7 @@ z*K = Hpt + Q                                  (Eq. POP)
 
 The computation is over P-256. `K`, `Hpt` are public; `z` and `Q` are secret.
 
-The PoP proves (Eq. POP) can be interpreted as three functionalities, each ran between prover (holder) and verifier (relying party):
+The PoP for (Eq. POP) can be interpreted as three functionalities, each run between prover (holder) and verifier (relying party):
 
 1. Commitment transfer ({{transfer}}).
    Transfer the commitment to `Q` from the credential curve to the Tom curve, where P-256 coordinate arithmetic is native.
@@ -256,12 +256,12 @@ The PoP proves (Eq. POP) can be interpreted as three functionalities, each ran b
    Set `Z = z*K` and commit to it to generate `C_Z`. Then, split Eq. POP into two statements: i. a scalar-multiplication statement (`Z = z*K`) and ii. a point-addition statement (`Z = Hpt + Q`).
 
 3. Curve-operation proofs.
-   Prove the two statements with the Sigma protocols of {{scalar-mult}} (scalar multiplication -SM-) and {{point-addition}} (point addition -PA-), run in parallel.
+   Prove the two statements with the Sigma protocols of {{scalar-mult}} (scalar multiplication, `SM`) and {{point-addition}} (point addition, `PA`), run in parallel.
 
-Symbolically, with `o` meaning sequential composition of functionalities (see {{RoK}}), our PoP is:
+Symbolically, with `x` denoting parallel (AND) composition and `o` sequential composition of functionalities (see {{RoK}}), our PoP is:
 
 ~~~
-PoP = ( SM AND PA ) o group o commitment-transfer
+PoP = ( SM x PA ) o group o transfer
 ~~~
 
 Each functionality is an honest-verifier zero-knowledge reduction.
@@ -369,7 +369,7 @@ C_x = Commit~(x; rho_x),    C_y = Commit~(y; rho_y)
 
 These two commitments, together denoted `C_Q`, are the output statement of the reduction and the committed form of `Q` used by the remaining proofs.
 
-This document adopts 128-bit limbs (and the parameters `b_m = 128, b_c = 112,b_f = 8`) for the transfer, as in {{PAPER}}: this minimizes the number of cross-group instances, and with the {{OKMZ}} parameters achieves 112-bit security.
+This document adopts 128-bit limbs (and the parameters `b_m = 128, b_c = 112, b_f = 8`) for the transfer, as in {{PAPER}}: this minimizes the number of cross-group instances, and with the {{OKMZ}} parameters achieves 112-bit security.
 Smaller limbs (e.g. 64-bit) work equally well -- they leave more headroom below `min(|F_s|, |F_q|)` and so can reach higher soundness -- at the cost of proportionally more cross-group instances; profiles with stricter requirements SHOULD adjust the limb size and repetition accordingly.
 
 # Reduction to Curve Operations {#rok-group}
@@ -580,7 +580,6 @@ Implementations MUST use the codec and challenge-derivation of {{FIAT-SHAMIR}} a
 - a fixed domain-separation label for this PoP and its version;
 - the public statement of (Eq. POP): `K`, `nonce` (or `Hpt`), and the committed key `C_Q` (and, after transfer, the Tom commitments);
 - for the bound presentation context, the challenge octets supplied by the calling protocol (see {{integration}}).
-
 
 The exact Fiat-Shamir binding for the composed protocol is not yet fixed by this document.
 In particular, the precise inputs absorbed before each challenge -- the domain separator, the credential- and Tom-curve commitments and announcements of the transfer ({{transfer}}), the prover messages of `SM` and `PA`, and the {{OKMZ}} bound parameters -- remain to be specified, and MUST be pinned down (consistent with {{FIAT-SHAMIR}}) before this profile is interoperable.
