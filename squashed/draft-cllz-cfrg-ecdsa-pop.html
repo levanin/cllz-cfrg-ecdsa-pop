@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>Schnorr-Type Proofs of Possession for ECDSA Device Binding</title>
+<meta content="Sofia Celi" name="author">
+<meta content="Anja Lehmann" name="author">
+<meta content="Shai Levin" name="author">
+<meta content="Alexandros Zacharakis" name="author">
+<meta content='
+       This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature produced under a committed public key over the NIST P-256 (secp256r1) curve.
+The PoP lets a credential holder prove, in zero knowledge, that it can produce a fresh ECDSA signature under a device public key without revealing that key, thereby providing device binding for privacy-preserving credentials whose presentation must remain unlinkable. 
+       The construction is built exclusively from Sigma protocols as it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
+It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to serve as the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
+SNARK-based realizations of the same relation are out of scope. 
+    ' name="description">
+<meta content="xml2rfc 3.34.0" name="generator">
+<meta content="Internet-Draft" name="keyword">
+<meta content="draft-cllz-cfrg-ecdsa-pop-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.34.0
+    Python 3.14.5
+    ConfigArgParse 1.7.5
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.10.0
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.33.1
+    wcwidth 0.8.2
+-->
+<link href="draft-cllz-cfrg-ecdsa-pop.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
+}
+svg {
+  display: block;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
+}
+.alignCenter {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+      float: none;
+    }
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a {
+  text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
+}
+.iref + a[href].internal {
+  color: var(--text-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
+  }
+  @media print {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+  & .prepared {
+    float: right;
+  }
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
+  }
+}
+
+/* Comments */
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
+      }
+    }
+    & a.toplink {
+      float: right;
+    }
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
+    }
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc {
+    page-break-before: always;
+    border-top: none;
+    padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">ECDSA-PoP</td>
+<td class="right">July 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Celi, et al.</td>
+<td class="center">Expires 4 January 2027</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Crypto Forum Research Group</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-cllz-cfrg-ecdsa-pop-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-07-03" class="published">3 July 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Informational</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2027-01-04">4 January 2027</time></dd>
+<dt class="label-authors">Authors:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">S. Celi</div>
+<div class="org">Brave Software / University of Bristol</div>
+</div>
+<div class="author">
+      <div class="author-name">A. Lehmann</div>
+<div class="org">Hasso Plattner Institute</div>
+</div>
+<div class="author">
+      <div class="author-name">S. Levin</div>
+<div class="org">Chalmers University of Technology / University of Gothenburg</div>
+</div>
+<div class="author">
+      <div class="author-name">A. Zacharakis</div>
+<div class="org">Hasso Plattner Institute</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">Schnorr-Type Proofs of Possession for ECDSA Device Binding</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document specifies a Schnorr-type, circuit-free zero-knowledge proof of possession (PoP) of an ECDSA signature produced under a committed public key over the NIST P-256 (secp256r1) curve.
+The PoP lets a credential holder prove, in zero knowledge, that it can produce a fresh ECDSA signature under a device public key without revealing that key, thereby providing device binding for privacy-preserving credentials whose presentation must remain unlinkable.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">The construction is built exclusively from Sigma protocols as it decomposes the ECDSA verification equation into a scalar-multiplication relation and a point-addition relation over P-256, each proved with a dedicated Sigma protocol over a companion ("Tom") curve whose scalar field equals the base field of P-256.
+It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to serve as the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
+SNARK-based realizations of the same relation are out of scope.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://levanin.github.io/cllz-cfrg-ecdsa-pop/draft-cllz-cfrg-ecdsa-pop.html">https://levanin.github.io/cllz-cfrg-ecdsa-pop/draft-cllz-cfrg-ecdsa-pop.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-cllz-cfrg-ecdsa-pop/">https://datatracker.ietf.org/doc/draft-cllz-cfrg-ecdsa-pop/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3">
+        Discussion of this document takes place on the
+        Crypto Forum Research Group mailing list (<span><a href="mailto:cfrg@ietf.org">mailto:cfrg@ietf.org</a></span>),
+        which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/cfrg/">https://mailarchive.ietf.org/arch/browse/cfrg/</a></span>.
+        Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/cfrg/">https://www.ietf.org/mailman/listinfo/cfrg/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
+<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/levanin/cllz-cfrg-ecdsa-pop">https://github.com/levanin/cllz-cfrg-ecdsa-pop</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 4 January 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-scope" class="internal xref">Scope</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
+                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-relationship-to-other-speci" class="internal xref">Relationship to Other Specifications</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-overview" class="internal xref">Overview</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-parameters-and-encodings" class="internal xref">Parameters and Encodings</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-curves-and-generators" class="internal xref">Curves and Generators</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-committing-to-a-p-256-publi" class="internal xref">Committing to a P-256 Public Key</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-commitment-transfer" class="internal xref">Commitment Transfer</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-protocol" class="internal xref">Protocol</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-reduction-to-curve-operatio" class="internal xref">Reduction to Curve Operations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-scalar-multiplication-proof" class="internal xref">Scalar-Multiplication Proof</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-protocol-2" class="internal xref">Protocol</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-point-addition-proof" class="internal xref">Point-Addition Proof</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-affine-addition-constraints" class="internal xref">Affine Addition Constraints</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-protocol-3" class="internal xref">Protocol</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
+                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-expressing-pa-via-the-sigma" class="internal xref">Expressing PA via the Sigma-Protocols Interface</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-non-interactive-proofs-fiat" class="internal xref">Non-Interactive Proofs (Fiat-Shamir)</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-integration-with-modular-bb" class="internal xref">Integration with Modular BBS</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-implementation-status" class="internal xref">Implementation Status</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#section-13" class="auto internal xref">13</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#section-14" class="auto internal xref">14</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.1">
+                <p id="section-toc.1-1.14.2.1.1"><a href="#section-14.1" class="auto internal xref">14.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.2">
+                <p id="section-toc.1-1.14.2.2.1"><a href="#section-14.2" class="auto internal xref">14.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-note-on-authorship" class="internal xref">Note on Authorship</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
+            <p id="section-toc.1-1.16.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17">
+            <p id="section-toc.1-1.17.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">Anonymous credentials enable privacy-preserving authentication: a holder presents an issuer-attested credential to a relying party while revealing only the minimum necessary information and remaining unlinkable across presentations. BBS signatures are a leading basis for such credentials and are being adopted in several standardization efforts <span>[<a href="#BBS" class="cite xref">BBS</a>]</span><span>[<a href="#BLIND-BBS" class="cite xref">BLIND-BBS</a>]</span><span>[<a href="#W3CBBS" class="cite xref">W3CBBS</a>]</span>. These efforts are of relevance to the European Union Digital Identity (EUDI) wallet <span>[<a href="#EUDI-ARF" class="cite xref">EUDI-ARF</a>]</span>, which is mandated to implement user authentication with strong privacy guarantees, including selective disclosure and unlinkability.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">A central requirement for credentials used in digital-identity deployments is non-transferability: a credential must be usable only by its legitimate holder, and not be shared, or copied. The standard way to enforce this is device binding. The credential is tied to a key held in a secure element (SE) on the user's device, and at presentation time the holder produces a fresh signature -- a proof of possession (PoP) -- under the corresponding secret key, which never leaves the SE. Because the key is non-exportable, the credential cannot be used without the device that holds it.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">The EUDI architecture mandates device binding to a secure element, but consumer-device secure elements are, in practice, restricted to ECDSA over P-256 and do not expose the pairing-friendly operations required by native anonymous-credential device binding. The lack of an efficient and robust device-binding mechanism for anonymous credentials on legacy hardware was a key reason such credentials were not used in the initial EUDI deployment, which instead relies on batch-issued one-time-use credentials <span>[<a href="#DEROSA" class="cite xref">DEROSA</a>]</span>.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">Here, we address the gap by specifying how to prove possession of an ECDSA signature under a committed device public key, so that ECDSA device binding can be composed with a pairing-based credential layer such as BBS. Our solution is based on Schnorr-type proofs, providing a robust, well-understood approach that avoids the implementation and interoperability challenges of circuit-based constructions.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<div id="scope">
+<section id="section-1.1">
+        <h3 id="name-scope">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-scope" class="section-name selfRef">Scope</a>
+        </h3>
+<p id="section-1.1-1">This document specifies only the <em>Schnorr-type</em> (Sigma-protocol-based) PoP.
+This is the most conservative construction in <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>: it uses no arithmetic circuits and no general-purpose proof system, relying solely on Sigma protocols and Pedersen commitments.
+SNARK / circuit-based realizations of the same statement (the "foreign-field" and "native circuit" constructions of <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>, and the Committed Schnorr reduction used by them) are explicitly out of scope.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<p id="section-1.1-2">The proof is interactive as described, and is made non-interactive with the Fiat-Shamir transform (<a href="#fiat-shamir" class="auto internal xref">Section 9</a>).
+Sigma protocols are composed using the interfaces of <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span>, and the non-interactive transform and its codec are taken from the companion specification <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span>.<a href="#section-1.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="relationship-to-other-specifications">
+<section id="section-1.2">
+        <h3 id="name-relationship-to-other-speci">
+<a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-relationship-to-other-speci" class="section-name selfRef">Relationship to Other Specifications</a>
+        </h3>
+<p id="section-1.2-1">This document is designed to compose with two CFRG / IETF efforts:<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1.2-2.1">
+            <p id="section-1.2-2.1.1"><span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span> (Sigma protocols).
+The sub-protocols specified here are Sigma protocols and are described, where possible, using the <code>Group</code>, <code>LinearRelation</code>, and <code>SigmaProtocol</code> abstractions of <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span>.
+In particular, the point-addition proof of <a href="#point-addition" class="auto internal xref">Section 8</a> is a batch of linear relations whose group bases include commitments drawn from the statement, and is therefore expressible through the <code>LinearRelation</code> interface; the scalar-multiplication proof of <a href="#scalar-mult" class="auto internal xref">Section 7</a> is a custom <code>SigmaProtocol</code> (a bit-challenge proof run with parallel repetition) that internally invokes the point-addition proof.<a href="#section-1.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.2-2.2">
+            <p id="section-1.2-2.2.1"><span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span> (modular BBS sub-proofs).
+The PoP specified here is intended to instantiate the <code>ecdsa-p256-db</code> device-binding sub-proof of <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span>, which exposes the holder's P-256 public key as four committed BBS messages carrying its 128-bit limbs (at indices <code>[0, 1, 2, 3]</code>) and binds the sub-proof to a challenge derived from the presentation headers.
+<a href="#integration" class="auto internal xref">Section 10</a> describes this binding.<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="conventions-and-definitions">
+<section id="section-2">
+      <h2 id="name-conventions-and-definitions">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">The following terms are used throughout.<a href="#section-2-2" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2-3">
+        <dt id="section-2-3.1">ECDSA curve (P-256):</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.2">
+          <p id="section-2-3.2.1">The curve secp256r1 / NIST P-256 <span>[<a href="#FIPS186-5" class="cite xref">FIPS186-5</a>]</span><span>[<a href="#SEC1" class="cite xref">SEC1</a>]</span>.
+<code>G_p</code> denotes its group of points (prime order <code>n_p</code>), <code>P</code> a fixed generator, <code>F_q</code> its base field, and <code>F_np</code> its scalar field.<a href="#section-2-3.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.3">Tom curve (Tom-256):</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.4">
+          <p id="section-2-3.4.1">A curve forming a "2-chain" with P-256: its scalar field equals the base field <code>F_q</code> of P-256 (see <span>[<a href="#ZKATTEST" class="cite xref">ZKATTEST</a>]</span>).
+<code>G_t</code> denotes its group of points.
+Arithmetic over <code>F_q</code> -- i.e. arithmetic on P-256 coordinates -- is therefore <em>native</em> in the scalar field of <code>G_t</code>, which is what makes the Sigma-protocol proofs efficient.<a href="#section-2-3.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.5">Credential curve:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.6">
+          <p id="section-2-3.6.1">The pairing-friendly curve used by the credential layer (e.g., BLS12-381 for BBS), with scalar field <code>F_s</code>.
+Commitments produced by the credential layer live over this curve.<a href="#section-2-3.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.7">Pedersen commitment:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.8">
+          <p id="section-2-3.8.1">For a group <code>G</code> with independent generators <code>(g, h)</code> (and, for vectors, <code>(g_1,...,g_k, h)</code>), the commitment to message <code>m</code> with randomness <code>rho</code> is <code>Commit(m; rho) = m*g + rho*h</code> (resp. <code>sum_i m_i*g_i + rho*h</code>).
+Pedersen commitments used here are perfectly hiding and computationally binding under the discrete-log assumption in <code>G</code>.<a href="#section-2-3.8.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+<p id="section-2-4">Throughout, lowercase letters denote scalars and uppercase letters denote group elements.
+<code>x*P</code> denotes scalar multiplication and <code>A + B</code> denotes group addition.
+<code>H(.)</code> is a hash into <code>F_np</code> (SHA-256 reduced mod <code>n_p</code>, as in ECDSA), and <code>F: G_p -&gt; F_np</code> is the ECDSA conversion function mapping a point to the integer reduction mod <code>n_p</code> of its x-coordinate.<a href="#section-2-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="overview">
+<section id="section-3">
+      <h2 id="name-overview">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-overview" class="section-name selfRef">Overview</a>
+      </h2>
+<p id="section-3-1">In this system there are three parties: a holder, who holds a credential and possesses an ECDSA-based device key pair; an issuer, who issues credentials; and a verifier, who verifies credentials and their binding to devices.
+The holder has a device ECDSA key pair (<code>private_key = x</code>, <code>public_key = Q</code>), where <code>Q = x*P</code> over P-256. This public key is included in the holder's credential (e.g., as a committed BBS message).
+The public key <span class="bcp14">MAY</span> be carried into the credential as a committed message via blind issuance (<span>[<a href="#BLIND-BBS" class="cite xref">BLIND-BBS</a>]</span>), that is, in hidden form, so that the issuer signs over <code>Q</code> without learning it. This case requires the additional functionality described in <a href="#transfer" class="auto internal xref">Section 5</a>.
+When presenting a credential, the verifier supplies a fresh <code>nonce</code>. The holder uses the secure element to produce an ECDSA signature over <code>nonce</code> with the device key pair, then proves in zero knowledge that it knows a valid signature under the committed key <code>Q</code>, without revealing <code>Q</code>.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">In order to instantiate this functionality, we rewrite how ECDSA signatures (which are of the form <code>(r, s)</code>) look like.
+As shown in <span>[<a href="#ZKATTEST" class="cite xref">ZKATTEST</a>]</span>, an ECDSA signature on a message <code>msg</code> can be rewritten as a pair <code>(K, z)</code> with <code>r = F(K)</code>, and <code>z = r^{-1} * s mod n_p</code>.
+The verification then reduces to checking (where <code>P</code> is a fixed generator):<a href="#section-3-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3-3">
+<pre>
+z*K = H(msg) * r^{-1} * P + Q
+</pre><a href="#section-3-3" class="pilcrow">¶</a>
+</div>
+<p id="section-3-4">Because the signature is fresh and single-use, the value <code>K</code> <span class="bcp14">MAY</span> be revealed without harming unlinkability; only the long-lived device public key <code>Q</code> must stay hidden.
+The purpose now is to prove that one knows a valid signature of the form above without revealing the underlying <code>Q</code> (this is the purpose of our PoP).
+By setting:<a href="#section-3-4" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3-5">
+<pre>
+alpha = H(nonce) * F(K)^{-1}  mod n_p          (a public scalar)
+Hpt   = alpha * P                              (a public P-256 point)
+</pre><a href="#section-3-5" class="pilcrow">¶</a>
+</div>
+<p id="section-3-6">the statement to be proved becomes: knowledge of a scalar <code>z</code> and an opening of the commitment to <code>Q</code> such that<a href="#section-3-6" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3-7">
+<pre>
+z*K = Hpt + Q                                  (Eq. POP)
+</pre><a href="#section-3-7" class="pilcrow">¶</a>
+</div>
+<p id="section-3-8">The computation is over P-256. <code>K</code>, <code>Hpt</code> are public; <code>z</code> and <code>Q</code> are secret.<a href="#section-3-8" class="pilcrow">¶</a></p>
+<p id="section-3-9">The PoP for (Eq. POP) can be interpreted as three functionalities, each run between prover (holder) and verifier (relying party):<a href="#section-3-9" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-3-10">
+<li id="section-3-10.1">
+          <p id="section-3-10.1.1">Commitment transfer (<a href="#transfer" class="auto internal xref">Section 5</a>).
+Transfer the commitment to <code>Q</code> from the credential curve to the Tom curve, where P-256 coordinate arithmetic is native.
+After this step <code>Q = (x, y)</code> is committed as two Tom Pedersen commitments <code>C_x = Commit(x; rho_x)</code> (to the <code>x</code> coordinate), <code>C_y = Commit(y; rho_y)</code> (to the <code>y</code> coordinate).<a href="#section-3-10.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-3-10.2">
+          <p id="section-3-10.2.1">Reduction to curve operations (<a href="#rok-group" class="auto internal xref">Section 6</a>).
+Set <code>Z = z*K</code> and commit to it to generate <code>C_Z</code>. Then, split Eq. POP into two statements: i. a scalar-multiplication statement (<code>Z = z*K</code>) and ii. a point-addition statement (<code>Z = Hpt + Q</code>).<a href="#section-3-10.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-3-10.3">
+          <p id="section-3-10.3.1">Curve-operation proofs.
+Prove the two statements with the Sigma protocols of <a href="#scalar-mult" class="auto internal xref">Section 7</a> (scalar multiplication, <code>SM</code>) and <a href="#point-addition" class="auto internal xref">Section 8</a> (point addition, <code>PA</code>), run in parallel.<a href="#section-3-10.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+<p id="section-3-11">Symbolically, with <code>x</code> denoting parallel (AND) composition and <code>o</code> sequential composition of functionalities (see <span>[<a href="#RoK" class="cite xref">RoK</a>]</span>), our PoP is:<a href="#section-3-11" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3-12">
+<pre>
+PoP = ( SM x PA ) o group o transfer
+</pre><a href="#section-3-12" class="pilcrow">¶</a>
+</div>
+<p id="section-3-13">Each functionality is an honest-verifier zero-knowledge reduction.
+This composition in the reduction of knowledge framework is then made non-interactive by applying the Fiat-Shamir transform (<a href="#fiat-shamir" class="auto internal xref">Section 9</a>), deriving every verifier challenge from the transcript; the exact per-challenge transcript inputs remain to be specified (see <a href="#fiat-shamir" class="auto internal xref">Section 9</a>).
+The result is a non-interactive zero-knowledge proof of knowledge for (Eq. POP).<a href="#section-3-13" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="parameters-and-encodings">
+<section id="section-4">
+      <h2 id="name-parameters-and-encodings">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-parameters-and-encodings" class="section-name selfRef">Parameters and Encodings</a>
+      </h2>
+<div id="curves-and-generators">
+<section id="section-4.1">
+        <h3 id="name-curves-and-generators">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-curves-and-generators" class="section-name selfRef">Curves and Generators</a>
+        </h3>
+<p id="section-4.1-1">An instantiation of this PoP fixes:<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.1-2.1">
+            <p id="section-4.1-2.1.1">the ECDSA curve P-256, with generator <code>P</code>, group order <code>n_p</code>, base field <code>F_q</code>;<a href="#section-4.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.1-2.2">
+            <p id="section-4.1-2.2.1">the Tom curve Tom-256 with group <code>G_t</code> whose scalar field is <code>F_q</code>, with two independent Pedersen generators <code>(G_t, H_t)</code>;<a href="#section-4.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.1-2.3">
+            <p id="section-4.1-2.3.1">the credential-layer commitment scheme (e.g., Pedersen over BLS12-381) and its generators, as fixed by the credential profile (e.g. <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span>).<a href="#section-4.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-4.1-3">The generators <code>(G_t, H_t)</code> <span class="bcp14">MUST</span> be sampled verifiably (e.g., via hash-to-curve from fixed domain-separation strings) so that no party knows their relative discrete logarithm.
+The concrete instantiation of such parameters should be resolved by future standardisation efforts.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="encoding">
+<section id="section-4.2">
+        <h3 id="name-committing-to-a-p-256-publi">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-committing-to-a-p-256-publi" class="section-name selfRef">Committing to a P-256 Public Key</a>
+        </h3>
+<p id="section-4.2-1">A P-256 public key is a point <code>Q = (x, y)</code> in <code>F_q^2</code>.
+Because the credential-layer commitment commits to scalars of the credential curve (<code>F_s</code>), each coordinate is encoded as a fixed number of limbs in <code>F_s</code>, and the limbs are committed with Pedersen.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<p id="section-4.2-2">This document adopts the approach of <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>, where each of <code>x</code> and <code>y</code> is split into two 128-bit little-endian limbs, i.e.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.2-3">
+<pre>
+x = x_0 + 2^128 * x_1,   0 &lt;= x_i &lt; 2^128
+</pre><a href="#section-4.2-3" class="pilcrow">¶</a>
+</div>
+<p id="section-4.2-4">and likewise for <code>y</code>.
+This matches the four 128-bit limb commitments (at indices <code>[0, 1, 2, 3]</code>) now used by the <code>ecdsa-p256-db</code> device binding of <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span>, which adopted this layout to align with <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>.
+The 128-bit limb size guarantees 112 bits of security for the transfer of <a href="#transfer" class="auto internal xref">Section 5</a> -- sufficient for this application -- and is chosen for efficiency and for interoperability with <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span>; the proofs below are otherwise agnostic to the limb size (see <a href="#transfer" class="auto internal xref">Section 5</a>).<a href="#section-4.2-4" class="pilcrow">¶</a></p>
+<p id="section-4.2-5">The credential layer is responsible, at issuance, for guaranteeing that (a) each limb lies in its declared range and (b) <code>(x, y)</code> is a valid P-256 point.
+This PoP assumes those facts hold a priori and does not re-prove them.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="transfer">
+<section id="section-5">
+      <h2 id="name-commitment-transfer">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-commitment-transfer" class="section-name selfRef">Commitment Transfer</a>
+      </h2>
+<p id="section-5-1">The PoP operates over the Tom curve, but the credential layer commits <code>Q</code> over the credential curve.
+The transfer step re-expresses the commitment to <code>Q</code> as commitments over Tom-256, preserving the committed value.
+Following <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>, it is structured as a <em>reduction of knowledge</em> (<span>[<a href="#RoK" class="cite xref">RoK</a>]</span>): a public-coin interactive reduction that maps a committed statement under the credential-curve scheme to the <em>same</em> statement under the Tom-curve scheme, after which the curve-operation proofs of <a href="#rok-group" class="auto internal xref">Section 6</a> take over.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<p id="section-5-2">Let <code>Commit</code> be the credential-curve commitment scheme and <code>Commit~</code> the Tom-curve scheme.
+Generically, for each committed value <code>m_i</code> with credential-curve commitment <code>C_i</code>, the prover produces a fresh Tom commitment <code>C~_i = Commit~(m_i; rho~_i)</code> and proves, with a public-coin proof of knowledge <code>EQ</code>, the relation<a href="#section-5-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5-3">
+<pre>
+R_eq = { (C_i, C~_i ; m_i, rho_i, rho~_i) :
+            C_i  = Commit (m_i; rho_i)  AND
+            C~_i = Commit~(m_i; rho~_i) }
+</pre><a href="#section-5-3" class="pilcrow">¶</a>
+</div>
+<p id="section-5-4">i.e. that <code>C_i</code> and <code>C~_i</code> open to the same value.
+All instances of <code>EQ</code> run in parallel.<a href="#section-5-4" class="pilcrow">¶</a></p>
+<p id="section-5-5">For Pedersen-to-Pedersen transfer across the credential and Tom curves, <code>EQ</code> <span class="bcp14">MUST</span> be instantiated with a cross-group equality-of-opening proof for small-integer messages (the technique of <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span>); the limb encoding of <a href="#encoding" class="auto internal xref">Section 4.2</a> guarantees the small-message precondition.<a href="#section-5-5" class="pilcrow">¶</a></p>
+<div id="protocol">
+<section id="section-5.1">
+        <h3 id="name-protocol">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-protocol" class="section-name selfRef">Protocol</a>
+        </h3>
+<p id="section-5.1-1">Unrolling the reduction of <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span> with <code>EQ</code> instantiated by the cross-group proof of <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> gives the following per-limb, public-coin protocol.
+It is run in parallel over all committed limbs, sharing a single challenge <code>c</code>.
+Write <code>(g, h)</code> for the credential-curve Pedersen generators and <code>(G_t, H_t)</code> for the Tom generators (<a href="#encoding" class="auto internal xref">Section 4.2</a>), and let <code>b_m</code>, <code>b_c</code>, <code>b_f</code> be the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> message-bound, challenge, and slack widths, with<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5.1-2">
+<pre>
+b_m + b_c + b_f  &lt;  log2( min(|F_s|, |F_q|) )
+</pre><a href="#section-5.1-2" class="pilcrow">¶</a>
+</div>
+<p id="section-5.1-3">so that every value below stays an integer in both scalar fields (no wraparound).<a href="#section-5.1-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5.1-4">
+<pre>
+Prover P                                  Verifier V
+  inputs: m_i, rho_i  (0 &lt;= m_i &lt; 2^b_m)  inputs: C_i = m_i*g + rho_i*h
+
+  # 1. new commitment: reduce the statement to Tom
+  rho~_i &lt;- F_q
+  C~_i = m_i*G_t + rho~_i*H_t
+                 ---            C~_i            ---&gt;
+
+  # 2. announcement: bounded masks in both groups
+  k_i  &lt;- { 0, ..., 2^(b_m + b_c + b_f) - 1 }
+  t_i  &lt;- F_s;   t~_i &lt;- F_q
+  A_i  = k_i*g   + t_i*h
+  A~_i = k_i*G_t + t~_i*H_t
+                 ---         A_i, A~_i          ---&gt;
+                 &lt;---   c &lt;- {0,...,2^b_c - 1}  ---
+  # 3. bounded response (z_i over the integers)
+  z_i  = k_i  + c*m_i
+  s_i  = t_i  + c*rho_i        (in F_s)
+  s~_i = t~_i + c*rho~_i       (in F_q)
+  if z_i outside the admissible range R: abort and restart
+                 ---       z_i, s_i, s~_i       ---&gt;
+
+Verifier checks (per limb i):
+  (1)  z_i*g   + s_i*h    == A_i  + c*C_i   # open, cred curve
+  (2)  z_i*G_t + s~_i*H_t == A~_i + c*C~_i  # open, Tom curve
+  (3)  z_i in R                             # range: no wraparound
+</pre><a href="#section-5.1-4" class="pilcrow">¶</a>
+</div>
+<p id="section-5.1-5">The abort in step 3 is the rejection sampling of <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span>; the admissible range <code>R</code> and the exact bound widths are those of <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span>, to which implementations <span class="bcp14">MUST</span> conform.
+On acceptance, both parties use Pedersen homomorphism to fold the per-limb Tom commitments <code>C~_i</code>, weighted by the appropriate powers of <code>2^b_m</code>, into the two single-scalar coordinate commitments<a href="#section-5.1-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5.1-6">
+<pre>
+C_x = Commit~(x; rho_x),    C_y = Commit~(y; rho_y)
+</pre><a href="#section-5.1-6" class="pilcrow">¶</a>
+</div>
+<p id="section-5.1-7">These two commitments, together denoted <code>C_Q</code>, are the output statement of the reduction and the committed form of <code>Q</code> used by the remaining proofs.<a href="#section-5.1-7" class="pilcrow">¶</a></p>
+<p id="section-5.1-8">This document adopts 128-bit limbs (and the parameters <code>b_m = 128, b_c = 112, b_f = 8</code>) for the transfer, as in <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>: this minimizes the number of cross-group instances, and with the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> parameters achieves 112-bit security.
+Smaller limbs (e.g. 64-bit) work equally well -- they leave more headroom below <code>min(|F_s|, |F_q|)</code> and so can reach higher soundness -- at the cost of proportionally more cross-group instances; profiles with stricter requirements <span class="bcp14">SHOULD</span> adjust the limb size and repetition accordingly.<a href="#section-5.1-8" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="rok-group">
+<section id="section-6">
+      <h2 id="name-reduction-to-curve-operatio">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-reduction-to-curve-operatio" class="section-name selfRef">Reduction to Curve Operations</a>
+      </h2>
+<p id="section-6-1">After transfer, the statement is (Eq. POP) with <code>Q</code> committed over Tom as <code>C_Q</code>, <code>K</code> and <code>Hpt</code> public.
+The <code>group</code> reduction introduces the point <code>Z = z*K</code> and splits (Eq. POP) into independent scalar-multiplication and point-addition statements.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<p id="section-6-2">Inputs:<a href="#section-6-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-6-3">
+<pre>
+statement: (C_Q, K, Hpt)   witness: (z, Q, rho_Q)
+relation:  z*K = Hpt + Q
+</pre><a href="#section-6-3" class="pilcrow">¶</a>
+</div>
+<p id="section-6-4">Protocol:<a href="#section-6-4" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6-5">
+<li id="section-6-5.1">
+          <p id="section-6-5.1.1">P computes <code>Z = z*K</code>, samples randomness <code>rho_Z</code>, and sends <code>C_Z = Commit~(Z; rho_Z)</code> (a Tom commitment to the P-256 point <code>Z</code>).<a href="#section-6-5.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-6-5.2">
+          <p id="section-6-5.2.1">Both parties compute <code>C_H = Commit~(Hpt; 0)</code>, the (deterministic, zero-randomness) commitment to the public point <code>Hpt</code>.<a href="#section-6-5.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-6-5.3">
+          <p id="section-6-5.3.1">The reduction outputs two statements:<a href="#section-6-5.3.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6-5.3.2.1">
+              <p id="section-6-5.3.2.1.1">Scalar multiplication: <code>statement_SM = (C_Z, K)</code>, <code>witness_SM = (Z, rho_Z, z)</code>, asserting <code>Z = z*K</code>.<a href="#section-6-5.3.2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6-5.3.2.2">
+              <p id="section-6-5.3.2.2.1">Point addition: <code>statement_PA = (C_Q, C_H, C_Z)</code>, <code>witness_PA</code> the openings of the three commitments, asserting <code>Q + Hpt = Z</code> (equivalently <code>Z = Hpt + Q</code>, Eq. POP).<a href="#section-6-5.3.2.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+      </ol>
+<p id="section-6-6">Note that <code>C_Q = (C_x, C_y)</code> is a pair of coordinate commitments; the point-addition proof of <a href="#point-addition" class="auto internal xref">Section 8</a> operates per coordinate.
+Likewise <code>C_Z</code> and <code>C_H</code> are coordinate-commitment pairs.<a href="#section-6-6" class="pilcrow">¶</a></p>
+<p id="section-6-7">The two output statements are then proved in a parallel composition: <code>SM x PA</code>.<a href="#section-6-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="scalar-mult">
+<section id="section-7">
+      <h2 id="name-scalar-multiplication-proof">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-scalar-multiplication-proof" class="section-name selfRef">Scalar-Multiplication Proof</a>
+      </h2>
+<p id="section-7-1">This section specifies the Sigma protocol <code>SM</code> proving the relation<a href="#section-7-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-7-2">
+<pre>
+R_SM = { ((C_Z, K) ; Z, rho_Z, z) :
+            C_Z = Commit~(Z; rho_Z)  AND  Z = z*K }
+</pre><a href="#section-7-2" class="pilcrow">¶</a>
+</div>
+<p id="section-7-3">where <code>K</code> is a public P-256 point, <code>z</code> a secret scalar, and <code>Z</code> a P-256 point committed over Tom.<a href="#section-7-3" class="pilcrow">¶</a></p>
+<p id="section-7-4"><code>SM</code> is the scalar-multiplication proof of CDLS <span>[<a href="#CDLS" class="cite xref">CDLS</a>]</span>, used here with one modification from <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>: the original protocol additionally committed to the scalar, whereas here <code>z</code> is a free (uncommitted) witness, which improves efficiency.<a href="#section-7-4" class="pilcrow">¶</a></p>
+<p id="section-7-5">It is a bit-challenge Schnorr-type proof: a single execution uses a one-bit verifier challenge and has knowledge-soundness error <code>1/2</code>.
+To reach error <code>2^-lambda</code>, <code>lambda</code> independent executions are run in parallel (<code>lambda = 128</code> is <span class="bcp14">RECOMMENDED</span>).
+In one execution, the prover derives from its witness an auxiliary ("combined") instance using fresh randomness, sends the corresponding commitments, the verifier replies with a challenge bit, and the prover opens one of two related committed instances according to that bit; the point relation among the committed instances is established by invoking the point-addition proof internally.
+The per-execution protocol is that of <span>[<a href="#CDLS" class="cite xref">CDLS</a>]</span> (Construction for <code>R_SM</code>), with the scalar treated as a free witness as noted above.<a href="#section-7-5" class="pilcrow">¶</a></p>
+<div id="protocol-1">
+<section id="section-7.1">
+        <h3 id="name-protocol-2">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-protocol-2" class="section-name selfRef">Protocol</a>
+        </h3>
+<p id="section-7.1-1">The following is one execution, between prover <code>P</code> and verifier <code>V</code>; <code>lambda</code> such executions run in parallel and share a single Fiat-Shamir transcript (<a href="#fiat-shamir" class="auto internal xref">Section 9</a>).
+<code>F_np</code> is the scalar field of P-256, and <code>Commit~</code> the Tom commitment scheme of <a href="#transfer" class="auto internal xref">Section 5</a>.
+As in <a href="#rok-group" class="auto internal xref">Section 6</a> and <a href="#point-addition" class="auto internal xref">Section 8</a>, each <code>Commit~</code> to a P-256 point is a pair of coordinate commitments -- one to the <code>x</code> and one to the <code>y</code> coordinate -- so <code>C_Z</code>, <code>C'</code>, and <code>C''</code> are coordinate-commitment pairs, and the openings (<code>rho_Z</code>, <code>rho'</code>, <code>rho''</code>, <code>tau</code>) and check (2) are taken per coordinate.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-7.1-2">
+<pre>
+Prover P                                        Verifier V
+  inputs: Z, z, rho_Z   (Z = z*K)               inputs: C_Z, K
+
+  # sample a fresh "combined" instance
+  omega &lt;- F_np \ {0, z, 2z}
+  Z'  = omega*K                  # public-scalar multiples of K
+  Z'' = (omega - z)*K
+  rho', rho'' &lt;- Tom randomness
+  C'  = Commit~(Z';  rho')
+  C'' = Commit~(Z''; rho'')
+
+  # point-addition instance over the committed points,
+  # asserting  Z + Z'' = Z' :
+  #   statement_PA = (C_Z, C'', C')
+  #   witness_PA   = (Z, rho_Z, Z'', rho'', Z', rho')
+  # PA is run with the C[2]-opening dropped (see {{point-addition}})
+  msg_1 = announcement of PA on statement_PA
+                 ---     C', C'', msg_1     ---&gt;
+                 &lt;---       b &lt;- {0,1}      ---
+  msg_2 = response of PA under challenge b
+  if b = 0:  (alpha, tau) = (omega,       rho')
+  if b = 1:  (alpha, tau) = (omega - z,   rho'')
+                 ---   alpha, tau, msg_2    ---&gt;
+
+Verifier checks:
+  (1)  PA on (C_Z, C'', C') accepts the transcript (msg_1, b, msg_2)
+  (2)  if b = 0:  C'  == Commit~(alpha*K; tau)
+       if b = 1:  C'' == Commit~(alpha*K; tau)
+</pre><a href="#section-7.1-2" class="pilcrow">¶</a>
+</div>
+<p id="section-7.1-3">Because <code>Z' = omega*K</code> and <code>Z'' = (omega - z)*K</code> are public-scalar multiples of <code>K</code>, the committed points satisfy <code>Z + Z'' = z*K + (omega - z)*K = omega*K = Z'</code>; the point-addition proof <code>PA</code> (<a href="#point-addition" class="auto internal xref">Section 8</a>) establishes this relation among <code>C_Z</code>, <code>C''</code>, <code>C'</code>, and is run here with the one-bit challenge <code>b</code>, which it shares with the opening (its announcement and response are <code>msg_1</code> and <code>msg_2</code>).
+Inside this composition <code>PA</code> drops its <code>C[2]</code> opening proof (the lines flagged <code>omit in SM</code> in <a href="#point-addition" class="auto internal xref">Section 8</a>), since the opening of <code>C_Z</code> is recovered from the two openings revealed across the <code>b = 0</code> and <code>b = 1</code> transcripts.
+The exclusion of <code>{0, z, 2z}</code> when sampling <code>omega</code> keeps <code>Z</code>, <code>Z'</code>, <code>Z''</code> non-identity and pairwise non-opposite, so the non-degeneracy precondition of <a href="#point-addition" class="auto internal xref">Section 8</a> holds.
+An extractor with accepting responses for both <code>b = 0</code> and <code>b = 1</code> recovers <code>alpha_0 = omega</code> and <code>alpha_1 = omega - z</code>, hence <code>z = alpha_0 - alpha_1</code> and the opening of <code>C_Z</code> as <code>Z = z*K</code>; revealing only one opening per execution gives (statistical) honest-verifier zero knowledge.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+<p id="section-7.1-4">When expressed via <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span>, <code>SM</code> is a custom <code>SigmaProtocol</code> (not a plain <code>LinearRelation</code>): its challenge is a single bit and the protocol is run as <code>lambda</code> parallel repetitions.
+Its zero-knowledge simulator follows the standard simulation for bit-challenge Sigma protocols (sample the challenge bit, then produce a consistent commitment and response).<a href="#section-7.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="point-addition">
+<section id="section-8">
+      <h2 id="name-point-addition-proof">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-point-addition-proof" class="section-name selfRef">Point-Addition Proof</a>
+      </h2>
+<p id="section-8-1">This section specifies the Sigma protocol <code>PA</code> proving the relation<a href="#section-8-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-8-2">
+<pre>
+R_PA = { ((C_1, C_2, C_3) ; P_1, P_2, P_3, openings) :
+            C_i = Commit~(P_i; rho_i)  AND  P_1 + P_2 = P_3 }
+</pre><a href="#section-8-2" class="pilcrow">¶</a>
+</div>
+<p id="section-8-3">over Tom commitments to the affine coordinates of <code>P_1 = (a_x, a_y)</code>, <code>P_2 = (b_x, b_y)</code>, <code>P_3 = (t_x, t_y)</code>, under the promise <code>P_1 != +-P_2</code> and <code>P_1, P_2 != identity</code> (guaranteed by the callers in this document).
+Each <code>C_i</code> is a pair of coordinate commitments; we write <code>C_1 = (C[1], C[2])</code>, <code>C_2 = (C[3], C[4])</code>, <code>C_3 = (C[5], C[6])</code>, committing to <code>a_x, a_y, b_x, b_y, t_x, t_y</code> respectively, all over Tom with generators <code>(G, H) = (G_t, H_t)</code>.<a href="#section-8-3" class="pilcrow">¶</a></p>
+<div id="affine-addition-constraints">
+<section id="section-8.1">
+        <h3 id="name-affine-addition-constraints">
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-affine-addition-constraints" class="section-name selfRef">Affine Addition Constraints</a>
+        </h3>
+<p id="section-8.1-1">For <code>P_3 = P_1 + P_2</code> with <code>tau = (b_y - a_y) / (b_x - a_x)</code> over <code>F_q</code>, the affine addition law is equivalent to the three constraints<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-8.1-2">
+<pre>
+(C1)   tau * (b_x - a_x) = b_y - a_y
+(C2)   tau^2             = a_x + b_x + t_x
+(C3)   tau * (a_x - t_x) = a_y + t_y
+</pre><a href="#section-8.1-2" class="pilcrow">¶</a>
+</div>
+<p id="section-8.1-3">together with <code>b_x - a_x != 0</code> (which enforces <code>P_1 != +-P_2</code>).
+<code>PA</code> proves knowledge of openings of the coordinate commitments and of a commitment to <code>tau</code> satisfying (C1)-(C3).<a href="#section-8.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="protocol-2">
+<section id="section-8.2">
+        <h3 id="name-protocol-3">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-protocol-3" class="section-name selfRef">Protocol</a>
+        </h3>
+<p id="section-8.2-1">Both parties first recompute, by Pedersen homomorphism, the derived commitments<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-8.2-2">
+<pre>
+C_f1 = C[3] - C[1]        # commits to (b_x - a_x)   : factor of (C1)
+C_p1 = C[4] - C[2]        # commits to (b_y - a_y)   : product of (C1)
+C_p2 = C[1] + C[3] + C[5] # (a_x + b_x + t_x) : product of (C2)
+C_f3 = C[1] - C[5]        # commits to (a_x - t_x)   : factor of (C3)
+C_p3 = C[2] + C[6]        # commits to (a_y + t_y)   : product of (C3)
+</pre><a href="#section-8.2-2" class="pilcrow">¶</a>
+</div>
+<p id="section-8.2-3">(Here <code>C_f_i</code>, <code>C_p_i</code> are the "factor" and "product" commitments of the i-th constraint.)  The prover commits to <code>tau</code> as <code>C_tau = tau*G + r_tau*H</code>.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
+<p id="section-8.2-4">The protocol is a three-move public-coin Sigma protocol: the prover sends a commitment message, the verifier replies with a uniform challenge <code>c</code> in <code>F_q</code>, and the prover sends a response.
+The verifier accepts iff all checks below hold.<a href="#section-8.2-4" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-8.2-5">
+<pre>
+Prover P                                      Verifier V
+  inputs: a_x,a_y,b_x,b_y,t_x,t_y, r_1..r_6
+                                              inputs: C[1..6]
+
+  tau = (b_y - a_y)/(b_x - a_x);  r_tau &lt;- F_q
+  C_tau = tau*G + r_tau*H
+
+  # masks
+  a_tau, a_rtau, a_f1, a_rf1, a_e1, a_e2 &lt;- F_q
+  a_f3, a_rf3, a_e3 &lt;- F_q
+  a_2, a_r2 &lt;- F_q                 # omit in SM (opening of C[2])
+  beta_2, beta_3, beta_4 &lt;- F_q;   beta_1 &lt;- F_q \ {0}
+
+  T1 = a_tau*G + a_rtau*H
+  T2 = a_f1*G  + a_rf1*H
+  T3 = a_tau*C_f1 + a_e1*H
+  T4 = a_tau*C_tau + a_e2*H
+  T5 = a_f3*G  + a_rf3*H
+  T6 = a_f3*C_tau + a_e3*H
+  T7 = a_2*G   + a_r2*H            # omit in SM
+  U1 = (beta_1*(b_x - a_x))*G
+  U2 = beta_2*C_f1 + beta_3*H
+  U3 = beta_4*G
+                  --- C_tau, T1..T6, T7, U1..U3 ---&gt;   # T7: omit in SM
+                  &lt;---            c &lt;- F_q        ---
+  z_tau  = a_tau + c*tau
+  z_rtau = a_rtau + c*r_tau
+  z_f1   = a_f1  + c*(b_x - a_x)
+  z_rf1  = a_rf1 + c*(r_3 - r_1)
+  z_e1   = a_e1  + c*((r_4 - r_2) - (r_3 - r_1)*tau)
+  z_e2   = a_e2  + c*((r_1 + r_3 + r_5) - r_tau*tau)
+  z_f3   = a_f3  + c*(a_x - t_x)
+  z_rf3  = a_rf3 + c*(r_1 - r_5)
+  z_e3   = a_e3  + c*((r_2 + r_6) - r_tau*(a_x - t_x))
+  z_2    = a_2   + c*a_y           # omit in SM
+  z_r2   = a_r2  + c*r_2           # omit in SM
+  v_1    = beta_2 + c*beta_1
+  v_2    = beta_3 - c*beta_1*(r_3 - r_1)
+  v_3    = beta_4 + c*beta_1*(b_x - a_x)
+                  ---  z_*, v_1, v_2, v_3  ---&gt;
+
+Verifier checks:
+  (1)  z_tau*G + z_rtau*H   == T1 + c*C_tau
+  (2)  z_f1*G  + z_rf1*H    == T2 + c*C_f1
+  (3)  z_tau*C_f1 + z_e1*H  == T3 + c*C_p1
+  (4)  z_tau*C_tau + z_e2*H == T4 + c*C_p2
+  (5)  z_f3*G  + z_rf3*H    == T5 + c*C_f3
+  (6)  z_f3*C_tau + z_e3*H  == T6 + c*C_p3
+  (7)  z_2*G   + z_r2*H     == T7 + c*C[2]      # omit in SM
+  (8)  U1 != identity
+  (9)  c*U1 + U3 == v_3*G
+  (10) c*U1 + U2 == v_1*C_f1 + v_2*H
+</pre><a href="#section-8.2-5" class="pilcrow">¶</a>
+</div>
+<p id="section-8.2-6">Checks (1)-(2) and (5) are openings; checks (3)-(4) and (6) prove the multiplicative / squaring constraints (C1)-(C3) (check (4) is a squaring proof realizing constraint (C2)); check (7) is the opening proof of <code>C[2]</code>, the <code>y</code>-coordinate commitment of <code>P_1</code>; and checks (8)-(10) are the non-zero proof for <code>C_f1</code>, establishing <code>b_x - a_x != 0</code> and hence <code>P_1 != +-P_2</code>.<a href="#section-8.2-6" class="pilcrow">¶</a></p>
+<p id="section-8.2-7">The lines flagged <code>omit in SM</code> -- the masks <code>a_2, a_r2</code>, the announcement <code>T7</code>, the responses <code>z_2, z_r2</code>, and check (7) -- together form the opening proof of <code>C[2]</code>.
+They are <span class="bcp14">REQUIRED</span> when <code>PA</code> is used standalone, as in the <code>SM x PA</code> composition of <a href="#rok-group" class="auto internal xref">Section 6</a> that proves <code>Z = Hpt + Q</code>.
+They are dropped when <code>PA</code> is composed inside <code>SM</code> (<a href="#scalar-mult" class="auto internal xref">Section 7</a>): there the opening of <code>C[2]</code> is instead extracted from the two colliding transcripts of the bit-challenge execution (Optimisation 3 of <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>), so proving it again would be redundant.<a href="#section-8.2-7" class="pilcrow">¶</a></p>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-8.2-8.1">
+            <p id="section-8.2-8.1.1">Note on further optimizations (from <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>): constraint (C2) uses a dedicated squaring proof rather than a generic multiplication proof, and the mask <code>(a_tau, a_rtau)</code> of <code>C_tau</code> is shared across the three coordinate proofs.<a href="#section-8.2-8.1.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="expressing-pa-via-the-sigma-protocols-interface">
+<section id="section-8.3">
+        <h3 id="name-expressing-pa-via-the-sigma">
+<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-expressing-pa-via-the-sigma" class="section-name selfRef">Expressing PA via the Sigma-Protocols Interface</a>
+        </h3>
+<p id="section-8.3-1">Each of checks (1)-(7) and (9)-(10) has the form <code>linear_map(response) == commitment + challenge * image</code>, i.e. a <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span> <code>LinearRelation</code> whose group bases are <code>G</code>, <code>H</code>, and statement commitments (<code>C_f1</code>, <code>C_tau</code>).
+An implementation <span class="bcp14">MAY</span> therefore realize <code>PA</code> by allocating the scalar witnesses (<code>tau</code>, the coordinate values, and the opening randomizers) and elements (<code>G</code>, <code>H</code>, the <code>C_*</code> commitments) with <code>allocate_scalars</code> / <code>allocate_elements</code>, encoding (C1)-(C3) and the opening relations with <code>append_equation</code> and <code>set_elements</code>, and running the resulting batch as a single Sigma protocol.
+The multiplicative and squaring checks (3),(4),(6) use statement commitments (<code>C_f1</code>, <code>C_tau</code>) as bases -- bound to allocated elements via <code>set_elements</code> -- rather than fixed generators; this is the standard Sigma technique for multiplication of committed values, and it stays within the <code>LinearRelation</code> interface.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
+<p id="section-8.3-2">The non-zero proof for <code>C_f1</code> (masks <code>beta_1..beta_4</code>, elements <code>U1, U2, U3</code>, responses <code>v_1, v_2, v_3</code>, and checks (8)-(10)) is a distinct gadget of <span>[<a href="#CDLS" class="cite xref">CDLS</a>]</span> and does not reduce to a plain <code>LinearRelation</code>.
+Its relations (9)-(10) are linear (over bases <code>G</code>, <code>H</code>, <code>C_f1</code>, with the prover-sent <code>U1</code> as image), but the defining ingredient is check (8), <code>U1 != identity</code> -- a non-identity test on a prover message, not a linear relation.
+Because <code>U1 = (beta_1*(b_x - a_x))*G</code> for a uniform nonzero mask <code>beta_1</code>, <code>U1</code> is the identity exactly when <code>b_x - a_x = 0</code>; check (8) thus certifies <code>b_x - a_x != 0</code> (hence <code>P_1 != +-P_2</code>).
+An implementation <span class="bcp14">MUST</span> perform check (8) explicitly, outside the batched <code>LinearRelation</code>.<a href="#section-8.3-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="fiat-shamir">
+<section id="section-9">
+      <h2 id="name-non-interactive-proofs-fiat">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-non-interactive-proofs-fiat" class="section-name selfRef">Non-Interactive Proofs (Fiat-Shamir)</a>
+      </h2>
+<p id="section-9-1">The interactive protocols above are public-coin and are made non-interactive with the Fiat-Shamir transform specified in the companion document <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span>, applied to the Sigma protocols composed via <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span>: each verifier challenge -- the equality-proof challenge of <a href="#transfer" class="auto internal xref">Section 5</a>, the bit-challenge <code>b</code> of <a href="#scalar-mult" class="auto internal xref">Section 7</a>, and the challenge <code>c</code> of <a href="#point-addition" class="auto internal xref">Section 8</a> -- is derived by absorbing, into the <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span> codec (duplex sponge), a transcript that includes a protocol/version domain separator, the ciphersuite identifier, the full statement, and all prior prover messages.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<p id="section-9-2">Implementations <span class="bcp14">MUST</span> use the codec and challenge-derivation of <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span> and <span class="bcp14">MUST</span> include the following in the Fiat-Shamir transcript:<a href="#section-9-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-9-3.1">
+          <p id="section-9-3.1.1">a fixed domain-separation label for this PoP and its version;<a href="#section-9-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-3.2">
+          <p id="section-9-3.2.1">the public statement of (Eq. POP): <code>K</code>, <code>nonce</code> (or <code>Hpt</code>), and the committed key <code>C_Q</code> (and, after transfer, the Tom commitments);<a href="#section-9-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-3.3">
+          <p id="section-9-3.3.1">for the bound presentation context, the challenge octets supplied by the calling protocol (see <a href="#integration" class="auto internal xref">Section 10</a>).<a href="#section-9-3.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-9-4">The exact Fiat-Shamir binding for the composed protocol is not yet fixed by this document.
+In particular, the precise inputs absorbed before each challenge -- the domain separator, the credential- and Tom-curve commitments and announcements of the transfer (<a href="#transfer" class="auto internal xref">Section 5</a>), the prover messages of <code>SM</code> and <code>PA</code>, and the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> bound parameters -- remain to be specified, and <span class="bcp14">MUST</span> be pinned down (consistent with <span>[<a href="#FIAT-SHAMIR" class="cite xref">FIAT-SHAMIR</a>]</span>) before this profile is interoperable.
+The move structure of the sub-protocols is normative; the exact byte-level Fiat-Shamir inputs and complete composed protocol specification are deferred to a future revision.<a href="#section-9-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="integration">
+<section id="section-10">
+      <h2 id="name-integration-with-modular-bb">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-integration-with-modular-bb" class="section-name selfRef">Integration with Modular BBS</a>
+      </h2>
+<p id="section-10-1">When used as the <code>ecdsa-p256-db</code> sub-proof of <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span>:<a href="#section-10-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10-2.1">
+          <p id="section-10-2.1.1">The holder's P-256 public key occupies four committed BBS messages carrying its 128-bit limbs, encoded as in <a href="#encoding" class="auto internal xref">Section 4.2</a>.
+The sub-proof carries <code>alg = "ecdsa-p256-db"</code> and takes no inputs beyond the base sub-proof fields; its <code>i</code> field <span class="bcp14">MUST</span> be <code>[0, 1, 2, 3]</code>, naming the four indices that hold these limbs.
+The BBS core proof (<code>CoreProofGen</code>) exposes the four messages as Pedersen commitments over the credential curve; these are the inputs <code>C_i</code> to the transfer of <a href="#transfer" class="auto internal xref">Section 5</a>.<a href="#section-10-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-10-2.2">
+          <p id="section-10-2.2.1">The four messages <span class="bcp14">MAY</span> be populated at issuance as committed messages using blind BBS issuance (<span>[<a href="#BLIND-BBS" class="cite xref">BLIND-BBS</a>]</span>): the holder sends the issuer a commitment to its device public key (with the holder-held blinding scalar) and a proof of its correctness, and the issuer blindly signs without learning <code>Q</code>.
+This keeps the device secret key bound to the holder's secure element and unknown to the issuer, and the issuance-time commitment to <code>Q</code> is reused as the transfer input above.<a href="#section-10-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-10-2.3">
+          <p id="section-10-2.3.1">The message signed by the secure element is not transmitted; both parties recompute it as <code>db_msg = "JWP-BBS-DB-CHAL" || presentation_header_octets</code>, where <code>"JWP-BBS-DB-CHAL"</code> is the literal ASCII string.
+Because <code>db_msg</code> binds <code>presentation_header_octets</code> (which carries the <code>nonce</code> and <code>aud</code>), it is fresh per presentation.
+<code>db_msg</code> is the ECDSA message of the PoP: it plays the role of <code>nonce</code> in <a href="#overview" class="auto internal xref">Section 3</a>, so <code>alpha</code> and <code>Hpt</code> are formed from <code>H(db_msg)</code>.<a href="#section-10-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-10-2.4">
+          <p id="section-10-2.4.1">The <code>proof</code> bytes are the serialized non-interactive PoP (<a href="#fiat-shamir" class="auto internal xref">Section 9</a>): a zero-knowledge proof of knowledge of <code>(Q, (r, s))</code> such that the four commitments at the indices in <code>i</code> open to the 128-bit limbs of <code>Q</code>, and <code>(r, s)</code> is a valid ECDSA P-256 signature on <code>db_msg</code> under <code>Q</code>.<a href="#section-10-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-10-2.5">
+          <p id="section-10-2.5.1">The verifier accepts iff the four indices in <code>i</code> are all committed in the core proof and the sub-proof verifies against the four commitments and the locally recomputed <code>db_msg</code>.
+This meets the <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span> requirement that a sub-proof bind to commitments attested by the core proof, since the transfer of <a href="#transfer" class="auto internal xref">Section 5</a> ties the Tom commitments <code>C_Q</code> to the credential-curve commitments produced by <code>CoreProofGen</code>.<a href="#section-10-2.5.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-10-3">The PoP itself is agnostic to the credential scheme: any scheme that can expose a Pedersen commitment to the device public key over a curve supported by the transfer of <a href="#transfer" class="auto internal xref">Section 5</a> can use this sub-proof.<a href="#section-10-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="implementation-status">
+<section id="section-11">
+      <h2 id="name-implementation-status">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-implementation-status" class="section-name selfRef">Implementation Status</a>
+      </h2>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-11-1.1">
+          <p id="section-11-1.1.1">Note to the RFC Editor: please remove this section before publication.<a href="#section-11-1.1.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-11-2">A public, benchmarked reference implementation of the complete Schnorr-type PoP specified here -- the <code>( SM x PA ) o group o transfer</code> composition of <a href="#overview" class="auto internal xref">Section 3</a>, including the <span>[<a href="#OKMZ" class="cite xref">OKMZ</a>]</span> style commitment transfer of <a href="#transfer" class="auto internal xref">Section 5</a> and the Tom-256 scalar-multiplication and point-addition proofs -- is available at <a href="https://github.com/hpicrypto/ecdsa_pops">https://github.com/hpicrypto/ecdsa_pops</a>.
+It is written in Rust and underlies the measurements reported in <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>.<a href="#section-11-2" class="pilcrow">¶</a></p>
+<p id="section-11-3"><span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span> gives three realizations of the same ECDSA-device-binding relation -- the Schnorr-type proof specified in this document and two circuit-based variants that are out of scope here (see <a href="#scope" class="auto internal xref">Section 1.1</a>) -- and earlier variants of the Schnorr-type approach appear in <span>[<a href="#UBIQUE" class="cite xref">UBIQUE</a>]</span>.
+The repository above is the specific implementation that matches this document's Schnorr-type protocol and parameter choices.<a href="#section-11-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-12">
+      <h2 id="name-security-considerations">
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<span class="break"></span><dl class="dlParallel" id="section-12-1">
+        <dt id="section-12-1.1">Knowledge soundness.</dt>
+        <dd style="margin-left: 1.5em" id="section-12-1.2">
+          <p id="section-12-1.2.1">The composed protocol is a proof of knowledge for (Eq. POP) (see <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span> for the analysis in the reductions-of-knowledge framework).
+<code>SM</code> has soundness error <code>2^-lambda</code> after <code>lambda</code> parallel repetitions; <code>PA</code> has the <code>2^-lambda</code> soundness error of a Sigma protocol over <code>F_q</code>.
+At the moment, we set <code>lambda = 128</code>, but since the commitment linking protocol <a href="#transfer" class="auto internal xref">Section 5</a> achieves 112 bits of soundness for our proposed parameters, we may update to <code>lambda = 112</code> in future revisions.
+Soundness of the overall PoP additionally relies on the binding of all Pedersen commitments, i.e. on the discrete-log assumption in both the credential curve and the Tom curve, and on the small-message soundness precondition of the transfer proof (<a href="#transfer" class="auto internal xref">Section 5</a>).<a href="#section-12-1.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-12-1.3">Zero knowledge / unlinkability.</dt>
+        <dd style="margin-left: 1.5em" id="section-12-1.4">
+          <p id="section-12-1.4.1">Each sub-protocol is honest-verifier zero-knowledge; with Fiat-Shamir over a random oracle the composition is non-interactive zero-knowledge.
+The device public key <code>Q</code> is the only long-lived value and remains perfectly hidden by the Pedersen commitments, so presentations are unlinkable.
+The ephemeral value <code>K</code> is fresh per signature and per presentation; revealing it does not link presentations.
+Implementations <span class="bcp14">MUST</span> use fresh randomness for every commitment and every proof; reuse of the per-execution randomness in <code>SM</code>, of commitment randomizers, or of the per-presentation <code>nonce</code> can leak the secret key or link presentations.<a href="#section-12-1.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-12-1.5">Secure-element trust.</dt>
+        <dd style="margin-left: 1.5em" id="section-12-1.6">
+          <p id="section-12-1.6.1">This PoP assumes the device secret key never leaves the secure element and that the element produces signatures only on inputs presented to it; the holder cannot extract the key.
+Revealing <code>K</code> as part of the statement is sound for proof of possession only under the honest-secure-element assumption discussed in <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>.<a href="#section-12-1.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-12-1.7">Choice of the Tom curve.</dt>
+        <dd style="margin-left: 1.5em" id="section-12-1.8">
+          <p id="section-12-1.8.1">Using the Tom curve introduces a discrete-log assumption over an additional, less-studied curve.
+Deployments unwilling to take this assumption should use a circuit-based realization instead (out of scope here).
+<code>(G_t, H_t)</code> and all credential-curve generators <span class="bcp14">MUST</span> be nothing-up-my-sleeve / verifiably random so no party knows discrete-log relations among them.<a href="#section-12-1.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-12-1.9">Non-degeneracy.</dt>
+        <dd style="margin-left: 1.5em" id="section-12-1.10">
+          <p id="section-12-1.10.1">The point-addition proof is sound only under <code>P_1 != +-P_2</code> and <code>P_1, P_2 != identity</code>.
+The callers in this document guarantee these: <code>SM</code> excludes the degenerate scalars when forming its auxiliary instances (per <span>[<a href="#CDLS" class="cite xref">CDLS</a>]</span>), and the <code>group</code> reduction fixes the operands structurally.
+Other callers <span class="bcp14">MUST</span> establish these preconditions independently.<a href="#section-12-1.10.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-12-1.11">Post-quantum.</dt>
+        <dd style="margin-left: 1.5em" id="section-12-1.12">
+          <p id="section-12-1.12.1">As with all discrete-log Sigma protocols, these proofs provide (statistical) zero-knowledge against unbounded adversaries but are not sound against quantum adversaries.<a href="#section-12-1.12.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-13">
+      <h2 id="name-iana-considerations">
+<a href="#section-13" class="section-number selfRef">13. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-13-1">This document has no IANA actions of its own.
+It defines the construction behind the <code>ecdsa-p256-db</code> sub-proof algorithm whose registration is requested by <span>[<a href="#MODULAR-BBS" class="cite xref">MODULAR-BBS</a>]</span> in that document's sub-proof algorithm registry; this document does not create a new registry.<a href="#section-13-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-14">
+      <h2 id="name-references">
+<a href="#section-14" class="section-number selfRef">14. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-14.1">
+        <h3 id="name-normative-references">
+<a href="#section-14.1" class="section-number selfRef">14.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="FIAT-SHAMIR">[FIAT-SHAMIR]</dt>
+        <dd>
+<span class="refAuthor">Orrù, M.</span>, <span class="refTitle">"Fiat-Shamir Transformation"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-fiat-shamir-02</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-fiat-shamir-02">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-fiat-shamir-02</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="FIPS186-5">[FIPS186-5]</dt>
+        <dd>
+<span class="refAuthor">National Institute of Standards and Technology</span>, <span class="refTitle">"Digital Signature Standard (DSS)"</span>, <span class="seriesInfo">FIPS PUB 186-5</span>, <time datetime="2023" class="refDate">2023</time>, <span>&lt;<a href="https://doi.org/10.6028/NIST.FIPS.186-5">https://doi.org/10.6028/NIST.FIPS.186-5</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="MODULAR-BBS">[MODULAR-BBS]</dt>
+        <dd>
+<span class="refAuthor">Bormann, C.</span> and <span class="refAuthor">B. Zundel</span>, <span class="refTitle">"BBS and Modular Sub-proofs with JSON Web Proofs"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-bormann-jwp-modular-bbs</span>, <time datetime="2025" class="refDate">2025</time>, <span>&lt;<a href="https://c2bo.github.io/draft-bormann-jwp-modular-bbs/draft-bormann-jwp-modular-bbs.html">https://c2bo.github.io/draft-bormann-jwp-modular-bbs/draft-bormann-jwp-modular-bbs.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="SEC1">[SEC1]</dt>
+        <dd>
+<span class="refAuthor">Standards for Efficient Cryptography Group</span>, <span class="refTitle">"SEC 1: Elliptic Curve Cryptography, Version 2.0"</span>, <time datetime="2009" class="refDate">2009</time>, <span>&lt;<a href="https://www.secg.org/sec1-v2.pdf">https://www.secg.org/sec1-v2.pdf</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="SIGMA">[SIGMA]</dt>
+      <dd>
+<span class="refAuthor">Orrù, M.</span> and <span class="refAuthor">C. Yun</span>, <span class="refTitle">"Interactive Sigma Proofs"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-sigma-protocols-02</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-sigma-protocols-02">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-sigma-protocols-02</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-14.2">
+        <h3 id="name-informative-references">
+<a href="#section-14.2" class="section-number selfRef">14.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="BBS">[BBS]</dt>
+        <dd>
+<span class="refAuthor">Looker, T.</span>, <span class="refAuthor">Kalos, V.</span>, <span class="refAuthor">Whitehead, A.</span>, and <span class="refAuthor">M. Lodder</span>, <span class="refTitle">"The BBS Signature Scheme"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-bbs-signatures-10</span>, <time datetime="2026-01-08" class="refDate">8 January 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-signatures-10">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-signatures-10</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="BLIND-BBS">[BLIND-BBS]</dt>
+        <dd>
+<span class="refAuthor">Kalos, V.</span> and <span class="refAuthor">G. M. Bernstein</span>, <span class="refTitle">"Blind BBS Signatures"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-bbs-blind-signatures-03</span>, <time datetime="2026-06-26" class="refDate">26 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-blind-signatures-03">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-blind-signatures-03</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="CDLS">[CDLS]</dt>
+        <dd>
+<span class="refAuthor">Celi, S.</span>, <span class="refAuthor">Levin, S.</span>, and <span class="refAuthor">J. Rowell</span>, <span class="refTitle">"CDLS: Proving Knowledge of Committed Discrete Logarithms with Soundness"</span>, <span class="seriesInfo">AFRICACRYPT 2024</span>, <time datetime="2024" class="refDate">2024</time>. </dd>
+<dd class="break"></dd>
+<dt id="DEROSA">[DEROSA]</dt>
+        <dd>
+<span class="refAuthor">Rosa, P. D.</span>, <span class="refTitle">"Discussion comment on Cryptographers' Feedback on the EU Digital Identity's ARF #211"</span>, <time datetime="2024" class="refDate">2024</time>, <span>&lt;<a href="https://github.com/eu-digital-identity-wallet/eudi-doc-architecture-and-reference-framework/discussions/211/#discussioncomment-9882388">https://github.com/eu-digital-identity-wallet/eudi-doc-architecture-and-reference-framework/discussions/211/#discussioncomment-9882388</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="EUDI-ARF">[EUDI-ARF]</dt>
+        <dd>
+<span class="refAuthor">European Commission</span>, <span class="refTitle">"EU Digital Identity Wallet -- Architecture and Reference Framework"</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://eudi.dev/2.4.0/">https://eudi.dev/2.4.0/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="LSZ">[LSZ]</dt>
+        <dd>
+<span class="refAuthor">Lehmann, A.</span>, <span class="refAuthor">Sidorenko, A.</span>, and <span class="refAuthor">A. Zacharakis</span>, <span class="refTitle">"Vision: A Modular Framework for Anonymous Credential Systems"</span>, <span class="seriesInfo">SSR 2025</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://doi.org/10.1007/978-3-032-19567-8_3">https://doi.org/10.1007/978-3-032-19567-8_3</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="OKMZ">[OKMZ]</dt>
+        <dd>
+<span class="refAuthor">Orru, M.</span>, <span class="refAuthor">Kadianakis, G.</span>, <span class="refAuthor">Maller, M.</span>, and <span class="refAuthor">G. Zaverucha</span>, <span class="refTitle">"Beyond the Circuit: How to Minimize Foreign Arithmetic in ZKP Circuits"</span>, <span class="seriesInfo">CiC 2025</span>, <time datetime="2025" class="refDate">2025</time>. </dd>
+<dd class="break"></dd>
+<dt id="PAPER">[PAPER]</dt>
+        <dd>
+<span class="refAuthor">Celi, S.</span>, <span class="refAuthor">Lehmann, A.</span>, <span class="refAuthor">Levin, S.</span>, and <span class="refAuthor">A. Zacharakis</span>, <span class="refTitle">"Device Binding for Anonymous Credentials on Legacy Phones"</span>, <time datetime="2025" class="refDate">2025</time>. </dd>
+<dd class="break"></dd>
+<dt id="RoK">[RoK]</dt>
+        <dd>
+<span class="refAuthor">Kothapalli, A.</span> and <span class="refAuthor">B. Parno</span>, <span class="refTitle">"Algebraic Reductions of Knowledge"</span>, <span class="seriesInfo">CRYPTO 2023</span>, <time datetime="2023" class="refDate">2023</time>. </dd>
+<dd class="break"></dd>
+<dt id="UBIQUE">[UBIQUE]</dt>
+        <dd>
+<span class="refAuthor">Ubique</span>, <span class="refTitle">"BBS+ Device Binding via ECDSA (EUDI Innovation Competition prototype)"</span>, <time datetime="2024" class="refDate">2024</time>. </dd>
+<dd class="break"></dd>
+<dt id="W3CBBS">[W3CBBS]</dt>
+        <dd>
+<span class="refAuthor">World Wide Web Consortium (W3C)</span>, <span class="refTitle">"Data Integrity BBS Cryptosuites v1.0"</span>, <time datetime="2025" class="refDate">2025</time>, <span>&lt;<a href="https://www.w3.org/TR/vc-di-bbs/">https://www.w3.org/TR/vc-di-bbs/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="ZKATTEST">[ZKATTEST]</dt>
+      <dd>
+<span class="refAuthor">Faz-Hernandez, A.</span>, <span class="refAuthor">Ladd, W.</span>, and <span class="refAuthor">D. Maram</span>, <span class="refTitle">"ZKAttest: Ring and Group Signatures on top of existing ECDSA keys"</span>, <span class="seriesInfo">SAC 2021</span>, <time datetime="2021" class="refDate">2021</time>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="note-on-authorship">
+<section id="appendix-A">
+      <h2 id="name-note-on-authorship">
+<a href="#name-note-on-authorship" class="section-name selfRef">Note on Authorship</a>
+      </h2>
+<p id="appendix-A-1">The authors are listed in alphabetical order by surname and contributed equally to this work; the ordering does not denote a lead or corresponding author.
+The document name uses the authors' combined initials ("cllz") rather than any single surname.
+The "et al." form that appears in running headers is an artifact of the RFC document format and carries no such connotation here.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-B">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-B-1">This specification is derived from the construction and analysis in <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>.
+The Schnorr-type proof of possession formalizes and optimizes the ECDSA-device-binding approach of <span>[<a href="#UBIQUE" class="cite xref">UBIQUE</a>]</span> and the CDLS / zkAttest proofs of <span>[<a href="#CDLS" class="cite xref">CDLS</a>]</span> and <span>[<a href="#ZKATTEST" class="cite xref">ZKATTEST</a>]</span>, composed through the modular credential framework of <span>[<a href="#LSZ" class="cite xref">LSZ</a>]</span> and the reductions-of-knowledge framework of <span>[<a href="#RoK" class="cite xref">RoK</a>]</span>.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-C">
+      <h2 id="name-authors-addresses">
+<a href="#name-authors-addresses" class="section-name selfRef">Authors' Addresses</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Sofia Celi</span></div>
+<div dir="auto" class="left"><span class="org">Brave Software / University of Bristol</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:cherenkov@riseup.net" class="email">cherenkov@riseup.net</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Anja Lehmann</span></div>
+<div dir="auto" class="left"><span class="org">Hasso Plattner Institute</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:anja.lehmann@hpi.de" class="email">anja.lehmann@hpi.de</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Shai Levin</span></div>
+<div dir="auto" class="left"><span class="org">Chalmers University of Technology / University of Gothenburg</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:shai.levin@chalmers.se" class="email">shai.levin@chalmers.se</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Alexandros Zacharakis</span></div>
+<div dir="auto" class="left"><span class="org">Hasso Plattner Institute</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:alexandros.zacharakis@hpi.de" class="email">alexandros.zacharakis@hpi.de</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
