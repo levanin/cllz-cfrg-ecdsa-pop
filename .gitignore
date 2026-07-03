@@ -1,0 +1,21 @@
+# i-d-template build machinery (cloned on first `make`).
+lib/
+
+# Generated draft artifacts.
+draft-*.txt
+draft-*.html
+draft-*.pdf
+
+# Tool caches and scratch.
+.refcache
+.targets.mk
+.venv
+.gems
+node_modules/
+
+# macOS Finder metadata, anywhere in the tree.
+.DS_Store
+
+
+# claude files
+.claude/
