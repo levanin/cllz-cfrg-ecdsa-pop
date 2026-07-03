@@ -15,3 +15,7 @@ node_modules/
 
 # macOS Finder metadata, anywhere in the tree.
 .DS_Store
+
+
+# claude files
+.claude/
