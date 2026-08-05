@@ -491,49 +491,47 @@ together with `b_x - a_x != 0` (which enforces `P_1 != +-P_2`).
 `PA` is the linear relation of {{SIGMA}} instantiated over T256:
 
 ~~~
-Relation PA(H, C1, C2, C3, C4, C5, C6, Ctau, U1):
-  Witness: tau, rtau, f1, rf1, e1, e2, f3, rf3, e3, ay, r2, b1, b2, m
+Relation PA(H, C1, C2, C3, C4, C5, C6, Ctau):
+  Witness: tau, rtau, inv_f1, aux_f1, e1, e2, f3, rf3, e3, ay, r2
   Equations:
     Ctau = tau * G + rtau * H              # slope commitment
-    C3 - C1 = f1 * G + rf1 * H             # factor of (C1)
+    G = inv_f1 * (C3 - C1) + aux_f1 * H    # C3-C1 opens to
+                                           # f1 = b_x - a_x != 0
     C4 - C2 = tau * (C3 - C1) + e1 * H     # (C1)
     C1 + C3 + C5 = tau * Ctau + e2 * H     # (C2), squaring
     C1 - C5 = f3 * G + rf3 * H             # factor of (C3)
     C2 + C6 = f3 * Ctau + e3 * H           # (C3)
     C2 = ay * G + r2 * H                   # omit in SM
-    U1 = m * G                             # non-zero, part 1
-    U1 = b1 * (C3 - C1) + b2 * H           # non-zero, part 2
 ~~~
 
 `G` is the T256 generator, `H` the auxiliary Pedersen generator.
 
-Note that instance validation in {{SIGMA}} rejects the identity in every instance element. Therefore, `U1 != identity` and thus `m = b1 * f1 != 0` (assuming the discrete logarithm of `H`base `G` is not known), hence `f1 = b_x - a_x != 0` and `P_1 != +-P_2`.
+Note that any witness with `inv_f1 = 0` would satisfy `G = aux_f1 * H` and thus reveal the discrete logarithm of `G` base `H`. Assuming this is not known, `inv_f1 != 0`, and `C3 - C1` opens to `f1 = 1 / inv_f1 != 0`, hence `b_x - a_x != 0` and `P_1 != +-P_2`.
 
-The prover holds `a_x`, `a_y`, `b_x`, `b_y`, `t_x`, `t_y` and `r_1`, ..., `r_6`; the verifier holds `C[1]`, ..., `C[6]`. The prover completes the instance with two elements of its own:
+The prover holds `a_x`, `a_y`, `b_x`, `b_y`, `t_x`, `t_y` and `r_1`, ..., `r_6`; the verifier holds `C[1]`, ..., `C[6]`. The prover completes the instance with one element of its own:
 
 ~~~
 tau = (b_y - a_y) / (b_x - a_x)
-r_tau  <-$ F_q;         Ctau = tau * G + r_tau * H
-beta_1 <-$ F_q \ {0};   U1 = (beta_1 * (b_x - a_x)) * G
+r_tau <-$ F_q;   Ctau = tau * G + r_tau * H
 ~~~
 
 and runs the {{SIGMA}} prover with the witness
 
 ~~~
-f1 = b_x - a_x   rf1 = r_3 - r_1   e1 = (r_4 - r_2) - rf1 * tau
+inv_f1 = 1 / (b_x - a_x)     aux_f1 = -(r_3 - r_1) / (b_x - a_x)
+e1 = (r_4 - r_2) - (r_3 - r_1) * tau
 f3 = a_x - t_x   rf3 = r_1 - r_5   e3 = (r_2 + r_6) - r_tau * f3
 ay = a_y         r2  = r_2         e2 = (r_1 + r_3 + r_5)
                                         - r_tau * tau
-b1 = beta_1      b2 = -beta_1 * rf1   m = beta_1 * f1
 ~~~
 
-`Ctau` and `U1` prepend the NARG string:
+`Ctau` prepends the NARG string:
 
 ~~~
-pa_proof =  Group.serialize([Ctau, U1]) || sigma_narg_string
+pa_proof =  Group.serialize([Ctau]) || sigma_narg_string
 ~~~
 
-The verifier rebuilds the instance from `C[1]`, ...`C[6]` and the received elements. Then, runs the {{SIGMA}} verifier; no checks beyond it are needed.
+The verifier rebuilds the instance from `C[1]`, ...`C[6]` and the received `Ctau`. Then, runs the {{SIGMA}} verifier; no checks beyond it are needed.
 
 When `PA` is composed with `SM` (Section 7), the equation `C[2] = ay * G + r2 * H` is un-necessary (Optimisation 3 of {{PAPER}}) and is therefore omitted, together with the scalar witnesses `ay`, `r2`.
 
