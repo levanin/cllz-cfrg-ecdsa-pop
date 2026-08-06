@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-04T02:12:06.380031+00:00",
+  "timestamp": "2026-08-06T02:19:13.203922+00:00",
   "repo": "levanin/cllz-cfrg-ecdsa-pop",
   "labels": [
     {
@@ -50,5 +50,58 @@
     }
   ],
   "issues": [],
-  "pulls": []
+  "pulls": [
+    {
+      "number": 1,
+      "id": "PR_kwDOTIdomM77QAv9",
+      "title": "chore: move PA and SM to sigma-proofs",
+      "url": "https://github.com/levanin/cllz-cfrg-ecdsa-pop/pull/1",
+      "state": "OPEN",
+      "author": "mmaker",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2026-08-05T19:32:00Z",
+      "updatedAt": "2026-08-05T19:32:00Z",
+      "baseRepository": "levanin/cllz-cfrg-ecdsa-pop",
+      "baseRefName": "main",
+      "baseRefOid": "74ef886e226d173c9af7043c75c0bcb75780a064",
+      "headRepository": "mmaker/cllz-cfrg-ecdsa-pop",
+      "headRefName": "mu/sigma-proofs",
+      "headRefOid": "034cf68d49aa53b697dd3bf821db9eb3a51b3f92",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 2,
+      "id": "PR_kwDOTIdomM77QBEg",
+      "title": "chore: optimize PA opening and non-zero proof into one equation",
+      "url": "https://github.com/levanin/cllz-cfrg-ecdsa-pop/pull/2",
+      "state": "OPEN",
+      "author": "mmaker",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2026-08-05T19:32:11Z",
+      "updatedAt": "2026-08-05T19:32:11Z",
+      "baseRepository": "levanin/cllz-cfrg-ecdsa-pop",
+      "baseRefName": "main",
+      "baseRefOid": "74ef886e226d173c9af7043c75c0bcb75780a064",
+      "headRepository": "mmaker/cllz-cfrg-ecdsa-pop",
+      "headRefName": "mu/sigma-proofs-opt",
+      "headRefOid": "cc3217ec2d6437196c5770da42af3b3f8da9a3fc",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    }
+  ]
 }
