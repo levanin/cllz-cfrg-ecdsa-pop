@@ -14,8 +14,10 @@ and it is the one linked from the I-D and used to submit to the IETF Datatracker
 
 **Golden rules**
 
-1. Always work against `origin` (the private repo). Never commit directly to the public repo.
+1. Always work against `origin` (the private repo). Never commit directly to the public repo
+   (the one exception is a maintainer merging an external PR; see section 4).
 2. Never pull the public repo's history back into private — treat `public` as write-only.
+   Changes from public PRs come into private by cherry-pick only (section 4).
 3. Only a maintainer runs the publishing steps and pushes `draft-*` tags.
 
 ---
@@ -94,6 +96,7 @@ git fetch public
 git checkout -B release          # throwaway branch at private HEAD
 git reset --soft public/main     # keep the files, drop the private commit history
 git rm --cached --ignore-unmatch COLLABORATING.md   # NEVER publish this file (keeps it on disk)
+git diff --cached --stat public/main   # review exactly what this snapshot changes on public
 git commit -m "Update draft: <summary of what changed>"
 
 # Push just that single commit to the public repo's main
@@ -137,6 +140,44 @@ Rules for versions:
 
 ---
 
+## 4. Incorporating PRs to the public repo (maintainers only)
+
+External contributors open PRs against the public repo. Public and private share
+no history (public is squashed snapshots), so the PR is merged on GitHub and its
+commits are cherry-picked into private.
+
+1. **Merge on GitHub.** Review and merge the PR on the public repo. Prefer
+   "Create a merge commit" or "Rebase and merge" so the contributor's commits stay
+   visible. If PRs are stacked, merge them in order.
+
+2. **Cherry-pick into private.** Note the PR's commit SHAs (listed on the PR's
+   **Commits** tab, or fetch it with `git fetch public pull/<N>/head:pr-<N>` and
+   run `git log --oneline public/main..pr-<N>` *before* merging), then:
+
+   ```sh
+   git checkout main
+   git pull origin main
+   git cherry-pick <sha1> <sha2> ...   # oldest first; contributor stays the author
+   git push origin main
+   ```
+
+   Resolve conflicts as usual if coauthors have since touched the same lines.
+
+3. **Check the two repos agree.** If private had no unpublished work, this should
+   list only `COLLABORATING.md`:
+
+   ```sh
+   git fetch public
+   git diff --stat public/main main
+   ```
+
+Step 2 is **mandatory before the next publish**. Publishing lays the whole private
+tree on top of `public/main`, so if the PR's changes aren't in private, the next
+snapshot silently reverts them on public. The `git diff --cached --stat` line in the
+publish recipe is there to catch this.
+
+---
+
 ## Quick reference
 
 ```
@@ -146,4 +187,5 @@ public  = public   (levanin/cllz-cfrg-ecdsa-pop)       <- clean snapshots only
 edit -> commit -> push origin main            (anyone, anytime)
 publish -> reset --soft public/main -> push public release:main   (maintainer)
 release -> tag draft-...-NN -> push public tag                    (maintainer)
+public PR -> merge on GitHub -> cherry-pick into private main     (maintainer, before next publish)
 ```
