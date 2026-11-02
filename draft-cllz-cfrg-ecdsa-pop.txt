@@ -5,11 +5,11 @@
 Crypto Forum Research Group                                      S. Celi
 Internet-Draft                    Brave Software / University of Bristol
 Intended status: Informational                                A. Lehmann
-Expires: 6 May 2027                             Hasso Plattner Institute
+Expires: 6 May 2027      Hasso Plattner Institute, University of Potsdam
                                                                 S. Levin
             Chalmers University of Technology / University of Gothenburg
                                                            A. Zacharakis
-                                                Hasso Plattner Institute
+                         Hasso Plattner Institute, University of Potsdam
                                                          2 November 2026
 
 
@@ -893,7 +893,7 @@ Table of Contents
               SSR 2025, 2026,
               <https://doi.org/10.1007/978-3-032-19567-8_3>.
 
-   [OKMZ]     Orru, M., Kadianakis, G., Maller, M., and G. Zaverucha,
+   [OKMZ]     Orrù, M., Kadianakis, G., Maller, M., and G. Zaverucha,
               "Beyond the Circuit: How to Minimize Foreign Arithmetic in
               ZKP Circuits", CiC 2025, 2025.
 
@@ -931,7 +931,9 @@ Acknowledgments
    optimizes the ECDSA-device-binding approach of [UBIQUE] and the CDLS
    / zkAttest proofs of [CDLS] and [ZKATTEST], composed through the
    modular credential framework of [LSZ] and the reductions-of-knowledge
-   framework of [RoK].
+   framework of [RoK].  We would like to especially thank Michele Orrù
+   for his contributions to the draft, namely an optimisation of the PA
+   protocol and its expression via the [SIGMA] interface.
 
 Authors' Addresses
 
@@ -941,7 +943,7 @@ Authors' Addresses
 
 
    Anja Lehmann
-   Hasso Plattner Institute
+   Hasso Plattner Institute, University of Potsdam
    Email: anja.lehmann@hpi.de
 
 
@@ -951,5 +953,5 @@ Authors' Addresses
 
 
    Alexandros Zacharakis
-   Hasso Plattner Institute
+   Hasso Plattner Institute, University of Potsdam
    Email: alexandros.zacharakis@hpi.de
