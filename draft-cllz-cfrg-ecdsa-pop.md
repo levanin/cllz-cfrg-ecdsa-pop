@@ -488,94 +488,54 @@ together with `b_x - a_x != 0` (which enforces `P_1 != +-P_2`).
 
 ## Protocol
 
-Both parties first recompute, by Pedersen homomorphism, the derived commitments
+`PA` is the linear relation of {{SIGMA}} instantiated over T256:
 
 ~~~
-C_f1 = C[3] - C[1]        # commits to (b_x - a_x)   : factor of (C1)
-C_p1 = C[4] - C[2]        # commits to (b_y - a_y)   : product of (C1)
-C_p2 = C[1] + C[3] + C[5] # (a_x + b_x + t_x) : product of (C2)
-C_f3 = C[1] - C[5]        # commits to (a_x - t_x)   : factor of (C3)
-C_p3 = C[2] + C[6]        # commits to (a_y + t_y)   : product of (C3)
+Relation PA(H, C1, C2, C3, C4, C5, C6, Ctau, U1):
+  Witness: tau, rtau, f1, rf1, e1, e2, f3, rf3, e3, ay, r2, b1, b2, m
+  Equations:
+    Ctau = tau * G + rtau * H              # slope commitment
+    C3 - C1 = f1 * G + rf1 * H             # factor of (C1)
+    C4 - C2 = tau * (C3 - C1) + e1 * H     # (C1)
+    C1 + C3 + C5 = tau * Ctau + e2 * H     # (C2), squaring
+    C1 - C5 = f3 * G + rf3 * H             # factor of (C3)
+    C2 + C6 = f3 * Ctau + e3 * H           # (C3)
+    C2 = ay * G + r2 * H                   # omit in SM
+    U1 = m * G                             # non-zero, part 1
+    U1 = b1 * (C3 - C1) + b2 * H           # non-zero, part 2
 ~~~
 
-(Here `C_f_i`, `C_p_i` are the "factor" and "product" commitments of the i-th constraint.)  The prover commits to `tau` as `C_tau = tau*G + r_tau*H`.
+`G` is the T256 generator, `H` the auxiliary Pedersen generator.
 
-The protocol is a three-move public-coin Sigma protocol: the prover sends a commitment message, the verifier replies with a uniform challenge `c` in `F_q`, and the prover sends a response.
-The verifier accepts iff all checks below hold.
+Note that instance validation in {{SIGMA}} rejects the identity in every instance element. Therefore, `U1 != identity` and thus `m = b1 * f1 != 0` (assuming the discrete logarithm of `H`base `G` is not known), hence `f1 = b_x - a_x != 0` and `P_1 != +-P_2`.
+
+The prover holds `a_x`, `a_y`, `b_x`, `b_y`, `t_x`, `t_y` and `r_1`, ..., `r_6`; the verifier holds `C[1]`, ..., `C[6]`. The prover completes the instance with two elements of its own:
 
 ~~~
-Prover P                                      Verifier V
-  inputs: a_x,a_y,b_x,b_y,t_x,t_y, r_1..r_6
-                                              inputs: C[1..6]
-
-  tau = (b_y - a_y)/(b_x - a_x);  r_tau <- F_q
-  C_tau = tau*G + r_tau*H
-
-  # masks
-  a_tau, a_rtau, a_f1, a_rf1, a_e1, a_e2 <- F_q
-  a_f3, a_rf3, a_e3 <- F_q
-  a_2, a_r2 <- F_q                 # omit in SM (opening of C[2])
-  beta_2, beta_3, beta_4 <- F_q;   beta_1 <- F_q \ {0}
-
-  T1 = a_tau*G + a_rtau*H
-  T2 = a_f1*G  + a_rf1*H
-  T3 = a_tau*C_f1 + a_e1*H
-  T4 = a_tau*C_tau + a_e2*H
-  T5 = a_f3*G  + a_rf3*H
-  T6 = a_f3*C_tau + a_e3*H
-  T7 = a_2*G   + a_r2*H            # omit in SM
-  U1 = (beta_1*(b_x - a_x))*G
-  U2 = beta_2*C_f1 + beta_3*H
-  U3 = beta_4*G
-                  --- C_tau, T1..T6, T7, U1..U3 --->   # T7: omit in SM
-                  <---            c <- F_q        ---
-  z_tau  = a_tau + c*tau
-  z_rtau = a_rtau + c*r_tau
-  z_f1   = a_f1  + c*(b_x - a_x)
-  z_rf1  = a_rf1 + c*(r_3 - r_1)
-  z_e1   = a_e1  + c*((r_4 - r_2) - (r_3 - r_1)*tau)
-  z_e2   = a_e2  + c*((r_1 + r_3 + r_5) - r_tau*tau)
-  z_f3   = a_f3  + c*(a_x - t_x)
-  z_rf3  = a_rf3 + c*(r_1 - r_5)
-  z_e3   = a_e3  + c*((r_2 + r_6) - r_tau*(a_x - t_x))
-  z_2    = a_2   + c*a_y           # omit in SM
-  z_r2   = a_r2  + c*r_2           # omit in SM
-  v_1    = beta_2 + c*beta_1
-  v_2    = beta_3 - c*beta_1*(r_3 - r_1)
-  v_3    = beta_4 + c*beta_1*(b_x - a_x)
-                  ---  z_*, v_1, v_2, v_3  --->
-
-Verifier checks:
-  (1)  z_tau*G + z_rtau*H   == T1 + c*C_tau
-  (2)  z_f1*G  + z_rf1*H    == T2 + c*C_f1
-  (3)  z_tau*C_f1 + z_e1*H  == T3 + c*C_p1
-  (4)  z_tau*C_tau + z_e2*H == T4 + c*C_p2
-  (5)  z_f3*G  + z_rf3*H    == T5 + c*C_f3
-  (6)  z_f3*C_tau + z_e3*H  == T6 + c*C_p3
-  (7)  z_2*G   + z_r2*H     == T7 + c*C[2]      # omit in SM
-  (8)  U1 != identity
-  (9)  c*U1 + U3 == v_3*G
-  (10) c*U1 + U2 == v_1*C_f1 + v_2*H
+tau = (b_y - a_y) / (b_x - a_x)
+r_tau  <-$ F_q;         Ctau = tau * G + r_tau * H
+beta_1 <-$ F_q \ {0};   U1 = (beta_1 * (b_x - a_x)) * G
 ~~~
 
-Checks (1)-(2) and (5) are openings; checks (3)-(4) and (6) prove the multiplicative / squaring constraints (C1)-(C3) (check (4) is a squaring proof realizing constraint (C2)); check (7) is the opening proof of `C[2]`, the `y`-coordinate commitment of `P_1`; and checks (8)-(10) are the non-zero proof for `C_f1`, establishing `b_x - a_x != 0` and hence `P_1 != +-P_2`.
+and runs the {{SIGMA}} prover with the witness
 
-The lines flagged `omit in SM` -- the masks `a_2, a_r2`, the announcement `T7`, the responses `z_2, z_r2`, and check (7) -- together form the opening proof of `C[2]`.
-They are REQUIRED when `PA` is used standalone, as in the `SM x PA` composition of {{rok-group}} that proves `Z = Hpt + Q`.
-They are dropped when `PA` is composed inside `SM` ({{scalar-mult}}): there the opening of `C[2]` is instead extracted from the two colliding transcripts of the bit-challenge execution (Optimisation 3 of {{PAPER}}), so proving it again would be redundant.
+~~~
+f1 = b_x - a_x   rf1 = r_3 - r_1   e1 = (r_4 - r_2) - rf1 * tau
+f3 = a_x - t_x   rf3 = r_1 - r_5   e3 = (r_2 + r_6) - r_tau * f3
+ay = a_y         r2  = r_2         e2 = (r_1 + r_3 + r_5)
+                                        - r_tau * tau
+b1 = beta_1      b2 = -beta_1 * rf1   m = beta_1 * f1
+~~~
 
-> Note on further optimizations (from {{PAPER}}): constraint (C2) uses a dedicated squaring proof rather than a generic multiplication proof, and the mask `(a_tau, a_rtau)` of `C_tau` is shared across the three coordinate proofs.
+`Ctau` and `U1` prepend the NARG string:
 
-## Expressing PA via the Sigma-Protocols Interface
+~~~
+pa_proof =  Group.serialize([Ctau, U1]) || sigma_narg_string
+~~~
 
-Each of checks (1)-(7) and (9)-(10) has the form `linear_map(response) == commitment + challenge * image`, i.e. a {{SIGMA}} `LinearRelation` whose group bases are `G`, `H`, and statement commitments (`C_f1`, `C_tau`).
-An implementation MAY therefore realize `PA` by allocating the scalar witnesses (`tau`, the coordinate values, and the opening randomizers) and elements (`G`, `H`, the `C_*` commitments) with `allocate_scalars` / `allocate_elements`, encoding (C1)-(C3) and the opening relations with `append_equation` and `set_elements`, and running the resulting batch as a single Sigma protocol.
-The multiplicative and squaring checks (3),(4),(6) use statement commitments (`C_f1`, `C_tau`) as bases -- bound to allocated elements via `set_elements` -- rather than fixed generators; this is the standard Sigma technique for multiplication of committed values, and it stays within the `LinearRelation` interface.
+The verifier rebuilds the instance from `C[1]`, ...`C[6]` and the received elements. Then, runs the {{SIGMA}} verifier; no checks beyond it are needed.
 
-The non-zero proof for `C_f1` (masks `beta_1..beta_4`, elements `U1, U2, U3`, responses `v_1, v_2, v_3`, and checks (8)-(10)) is a distinct gadget of {{CDLS}} and does not reduce to a plain `LinearRelation`.
-Its relations (9)-(10) are linear (over bases `G`, `H`, `C_f1`, with the prover-sent `U1` as image), but the defining ingredient is check (8), `U1 != identity` -- a non-identity test on a prover message, not a linear relation.
-Because `U1 = (beta_1*(b_x - a_x))*G` for a uniform nonzero mask `beta_1`, `U1` is the identity exactly when `b_x - a_x = 0`; check (8) thus certifies `b_x - a_x != 0` (hence `P_1 != +-P_2`).
-An implementation MUST perform check (8) explicitly, outside the batched `LinearRelation`.
+When `PA` is composed with `SM` (Section 7), the equation `C[2] = ay * G + r2 * H` is un-necessary (Optimisation 3 of {{PAPER}}) and is therefore omitted, together with the scalar witnesses `ay`, `r2`.
 
 # Non-Interactive Proofs (Fiat-Shamir) {#fiat-shamir}
 
