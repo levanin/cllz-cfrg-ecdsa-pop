@@ -454,7 +454,7 @@ Verifier checks:
 ~~~
 
 Because `Z' = omega*K` and `Z'' = (omega - z)*K` are public-scalar multiples of `K`, the committed points satisfy `Z + Z'' = z*K + (omega - z)*K = omega*K = Z'`; the point-addition proof `PA` ({{point-addition}}) establishes this relation among `C_Z`, `C''`, `C'`, and is run here with the one-bit challenge `b`, which it shares with the opening (its announcement and response are `msg_1` and `msg_2`).
-Inside this composition `PA` drops its `C[2]` opening proof (the lines flagged `omit in SM` in {{point-addition}}), since the opening of `C_Z` is recovered from the two openings revealed across the `b = 0` and `b = 1` transcripts.
+Inside this composition `PA` drops its `C[2]` opening proof (the equation flagged `omit in SM` in {{point-addition}}), since the opening of `C_Z` is recovered from the two openings revealed across the `b = 0` and `b = 1` transcripts.
 The exclusion of `{0, z, 2z}` when sampling `omega` keeps `Z`, `Z'`, `Z''` non-identity and pairwise non-opposite, so the non-degeneracy precondition of {{point-addition}} holds.
 An extractor with accepting responses for both `b = 0` and `b = 1` recovers `alpha_0 = omega` and `alpha_1 = omega - z`, hence `z = alpha_0 - alpha_1` and the opening of `C_Z` as `Z = z*K`; revealing only one opening per execution gives (statistical) honest-verifier zero knowledge.
 
@@ -488,31 +488,31 @@ together with `b_x - a_x != 0` (which enforces `P_1 != +-P_2`).
 
 ## Protocol
 
-`PA` is the linear relation of {{SIGMA}} instantiated over T256:
+`PA` is the linear relation of {{SIGMA}} instantiated over Tom-256:
 
 ~~~
-Relation PA(H, C1, C2, C3, C4, C5, C6, Ctau):
+Relation PA(H, C[1], ..., C[6], C_tau):
   Witness: tau, rtau, inv_f1, aux_f1, e1, e2, f3, rf3, e3, ay, r2
   Equations:
-    Ctau = tau * G + rtau * H              # slope commitment
-    G = inv_f1 * (C3 - C1) + aux_f1 * H    # C3-C1 opens to
-                                           # f1 = b_x - a_x != 0
-    C4 - C2 = tau * (C3 - C1) + e1 * H     # (C1)
-    C1 + C3 + C5 = tau * Ctau + e2 * H     # (C2), squaring
-    C1 - C5 = f3 * G + rf3 * H             # factor of (C3)
-    C2 + C6 = f3 * Ctau + e3 * H           # (C3)
-    C2 = ay * G + r2 * H                   # omit in SM
+    C_tau = tau * G + rtau * H                  # slope commitment
+    G = inv_f1 * (C[3] - C[1]) + aux_f1 * H     # C[3] - C[1] opens
+                                                # to b_x - a_x != 0
+    C[4] - C[2] = tau * (C[3] - C[1]) + e1 * H  # (C1)
+    C[1] + C[3] + C[5] = tau * C_tau + e2 * H   # (C2), squaring
+    C[1] - C[5] = f3 * G + rf3 * H              # factor of (C3)
+    C[2] + C[6] = f3 * C_tau + e3 * H           # (C3)
+    C[2] = ay * G + r2 * H                      # omit in SM
 ~~~
 
-`G` is the T256 generator, `H` the auxiliary Pedersen generator.
+`G` is the Tom-256 generator, `H` the auxiliary Pedersen generator.
 
-Note that any witness with `inv_f1 = 0` would satisfy `G = aux_f1 * H` and thus reveal the discrete logarithm of `G` base `H`. Assuming this is not known, `inv_f1 != 0`, and `C3 - C1` opens to `f1 = 1 / inv_f1 != 0`, hence `b_x - a_x != 0` and `P_1 != +-P_2`.
+Note that any witness with `inv_f1 = 0` would satisfy `G = aux_f1 * H` and thus reveal the discrete logarithm of `G` base `H`. Assuming this is not known, `inv_f1 != 0`, and `C[3] - C[1]` opens to `f1 = 1 / inv_f1 != 0`, hence `b_x - a_x != 0` and `P_1 != +-P_2`.
 
 The prover holds `a_x`, `a_y`, `b_x`, `b_y`, `t_x`, `t_y` and `r_1`, ..., `r_6`; the verifier holds `C[1]`, ..., `C[6]`. The prover completes the instance with one element of its own:
 
 ~~~
 tau = (b_y - a_y) / (b_x - a_x)
-r_tau <-$ F_q;   Ctau = tau * G + r_tau * H
+rtau <-$ F_q;   C_tau = tau * G + rtau * H
 ~~~
 
 and runs the {{SIGMA}} prover with the witness
@@ -520,24 +520,21 @@ and runs the {{SIGMA}} prover with the witness
 ~~~
 inv_f1 = 1 / (b_x - a_x)     aux_f1 = -(r_3 - r_1) / (b_x - a_x)
 e1 = (r_4 - r_2) - (r_3 - r_1) * tau
-f3 = a_x - t_x   rf3 = r_1 - r_5   e3 = (r_2 + r_6) - r_tau * f3
-ay = a_y         r2  = r_2         e2 = (r_1 + r_3 + r_5)
-                                        - r_tau * tau
+e2 = (r_1 + r_3 + r_5) - rtau * tau
+f3 = a_x - t_x   rf3 = r_1 - r_5   e3 = (r_2 + r_6) - rtau * f3
+ay = a_y         r2  = r_2
 ~~~
 
-`Ctau` prepends the NARG string:
+The verifier rebuilds the instance from `C[1]`, ..., `C[6]` and the received `C_tau`, then runs the {{SIGMA}} verifier; no checks beyond it are needed.
+`PA` has no Fiat-Shamir challenge of its own; see {{fiat-shamir}}.
 
-~~~
-pa_proof =  Group.serialize([Ctau]) || sigma_narg_string
-~~~
-
-The verifier rebuilds the instance from `C[1]`, ...`C[6]` and the received `Ctau`. Then, runs the {{SIGMA}} verifier; no checks beyond it are needed.
-
-When `PA` is composed with `SM` (Section 7), the equation `C[2] = ay * G + r2 * H` is un-necessary (Optimisation 3 of {{PAPER}}) and is therefore omitted, together with the scalar witnesses `ay`, `r2`.
+When `PA` is run inside `SM` ({{scalar-mult}}), the equation `C[2] = ay * G + r2 * H` is unnecessary (Optimisation 3 of {{PAPER}}) and is therefore omitted, together with the scalar witnesses `ay`, `r2`.
+It MUST be kept when `PA` runs alongside `SM` in the `SM x PA` composition of {{rok-group}}.
 
 # Non-Interactive Proofs (Fiat-Shamir) {#fiat-shamir}
 
-The interactive protocols above are public-coin and are made non-interactive with the Fiat-Shamir transform specified in the companion document {{FIAT-SHAMIR}}, applied to the Sigma protocols composed via {{SIGMA}}: each verifier challenge -- the equality-proof challenge of {{transfer}}, the bit-challenge `b` of {{scalar-mult}}, and the challenge `c` of {{point-addition}} -- is derived by absorbing, into the {{FIAT-SHAMIR}} codec (duplex sponge), a transcript that includes a protocol/version domain separator, the ciphersuite identifier, the full statement, and all prior prover messages.
+The interactive protocols above are public-coin and are made non-interactive with the Fiat-Shamir transform specified in the companion document {{FIAT-SHAMIR}}, applied to the Sigma protocols composed via {{SIGMA}}: each verifier challenge -- the equality-proof challenge of {{transfer}}, the bit-challenge `b` of {{scalar-mult}}, and the challenge of {{point-addition}} -- is derived by absorbing, into the {{FIAT-SHAMIR}} codec (duplex sponge), a transcript that includes a protocol/version domain separator, the ciphersuite identifier, the full statement, and all prior prover messages.
+`SM` and `PA` are composed in parallel ({{rok-group}}) under a single hash call: the commitment-phase messages of both are absorbed, and the `lambda` bits `b` of `SM` and the challenge of `PA` are all derived from that one call.
 
 Implementations MUST use the codec and challenge-derivation of {{FIAT-SHAMIR}} and MUST include the following in the Fiat-Shamir transcript:
 
@@ -575,7 +572,7 @@ A public, benchmarked reference implementation of the complete Schnorr-type PoP 
 It is written in Rust and underlies the measurements reported in {{PAPER}}.
 
 {{PAPER}} gives three realizations of the same ECDSA-device-binding relation -- the Schnorr-type proof specified in this document and two circuit-based variants that are out of scope here (see {{scope}}) -- and earlier variants of the Schnorr-type approach appear in {{UBIQUE}}.
-The repository above is the specific implementation that matches this document's Schnorr-type protocol and parameter choices.
+The repository above is the specific implementation that matches this document's Schnorr-type protocol and parameter choices, except that its `PA` proves `b_x - a_x != 0` with the non-zero gadget of {{CDLS}} rather than the single equation of {{point-addition}}.
 
 # Security Considerations
 
