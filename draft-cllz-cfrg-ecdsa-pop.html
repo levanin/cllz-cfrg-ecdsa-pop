@@ -16,23 +16,23 @@ The PoP lets a credential holder prove, in zero knowledge, that it can produce a
 It is designed to be expressed using the interfaces of the CFRG Sigma-protocols specification and to serve as the device-binding sub-proof of the modular BBS / JSON Web Proofs construction.
 SNARK-based realizations of the same relation are out of scope. 
     ' name="description">
-<meta content="xml2rfc 3.34.0" name="generator">
+<meta content="xml2rfc 3.34.1" name="generator">
 <meta content="Internet-Draft" name="keyword">
 <meta content="draft-cllz-cfrg-ecdsa-pop-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.34.0
-    Python 3.14.5
-    ConfigArgParse 1.7.5
+  xml2rfc 3.34.1
+    Python 3.14.8
+    ConfigArgParse 1.8.0
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
     lxml 6.1.1
     natsort 8.4.0
-    platformdirs 4.10.0
+    platformdirs 4.13.4
     pycountry 24.6.1
     PyYAML 6.0.3
     requests 2.33.1
-    wcwidth 0.8.1
+    wcwidth 0.9.2
 -->
 <link href="draft-cllz-cfrg-ecdsa-pop.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -68,7 +68,6 @@ SNARK-based realizations of the same relation are out of scope.
   src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-
 @font-face {
   font-family: 'Lora';
   font-style: italic;
@@ -117,7 +116,6 @@ SNARK-based realizations of the same relation are out of scope.
   src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-
 @font-face {
   font-family: 'Lora';
   font-style: normal;
@@ -182,7 +180,6 @@ SNARK-based realizations of the same relation are out of scope.
   font-display: swap;
   src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
 }
 
 @font-face {
@@ -1051,11 +1048,11 @@ svg {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">ECDSA-PoP</td>
-<td class="right">July 2026</td>
+<td class="right">November 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Celi, et al.</td>
-<td class="center">Expires 3 January 2027</td>
+<td class="center">Expires 6 May 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1068,12 +1065,12 @@ svg {
 <dd class="internet-draft">draft-cllz-cfrg-ecdsa-pop-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-07-02" class="published">2 July 2026</time>
+<time datetime="2026-11-02" class="published">2 November 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-01-03">3 January 2027</time></dd>
+<dd class="expires"><time datetime="2027-05-06">6 May 2027</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1139,7 +1136,7 @@ SNARK-based realizations of the same relation are out of scope.<a href="#section
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 3 January 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 6 May 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1220,9 +1217,6 @@ SNARK-based realizations of the same relation are out of scope.<a href="#section
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
                 <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-protocol-3" class="internal xref">Protocol</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
-                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-expressing-pa-via-the-sigma" class="internal xref">Expressing PA via the Sigma-Protocols Interface</a></p>
 </li>
             </ul>
 </li>
@@ -1679,98 +1673,51 @@ Each <code>C_i</code> is a pair of coordinate commitments; we write <code>C_1 = 
         <h3 id="name-protocol-3">
 <a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-protocol-3" class="section-name selfRef">Protocol</a>
         </h3>
-<p id="section-8.2-1">Both parties first recompute, by Pedersen homomorphism, the derived commitments<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-1"><code>PA</code> is the linear relation of <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span> instantiated over T256:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-8.2-2">
 <pre>
-C_f1 = C[3] - C[1]        # commits to (b_x - a_x)   : factor of (C1)
-C_p1 = C[4] - C[2]        # commits to (b_y - a_y)   : product of (C1)
-C_p2 = C[1] + C[3] + C[5] # (a_x + b_x + t_x) : product of (C2)
-C_f3 = C[1] - C[5]        # commits to (a_x - t_x)   : factor of (C3)
-C_p3 = C[2] + C[6]        # commits to (a_y + t_y)   : product of (C3)
+Relation PA(H, C1, C2, C3, C4, C5, C6, Ctau, U1):
+  Witness: tau, rtau, f1, rf1, e1, e2, f3, rf3, e3, ay, r2, b1, b2, m
+  Equations:
+    Ctau = tau * G + rtau * H              # slope commitment
+    C3 - C1 = f1 * G + rf1 * H             # factor of (C1)
+    C4 - C2 = tau * (C3 - C1) + e1 * H     # (C1)
+    C1 + C3 + C5 = tau * Ctau + e2 * H     # (C2), squaring
+    C1 - C5 = f3 * G + rf3 * H             # factor of (C3)
+    C2 + C6 = f3 * Ctau + e3 * H           # (C3)
+    C2 = ay * G + r2 * H                   # omit in SM
+    U1 = m * G                             # non-zero, part 1
+    U1 = b1 * (C3 - C1) + b2 * H           # non-zero, part 2
 </pre><a href="#section-8.2-2" class="pilcrow">¶</a>
 </div>
-<p id="section-8.2-3">(Here <code>C_f_i</code>, <code>C_p_i</code> are the "factor" and "product" commitments of the i-th constraint.)  The prover commits to <code>tau</code> as <code>C_tau = tau*G + r_tau*H</code>.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
-<p id="section-8.2-4">The protocol is a three-move public-coin Sigma protocol: the prover sends a commitment message, the verifier replies with a uniform challenge <code>c</code> in <code>F_q</code>, and the prover sends a response.
-The verifier accepts iff all checks below hold.<a href="#section-8.2-4" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-8.2-5">
+<p id="section-8.2-3"><code>G</code> is the T256 generator, <code>H</code> the auxiliary Pedersen generator.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
+<p id="section-8.2-4">Note that instance validation in <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span> rejects the identity in every instance element. Therefore, <code>U1 != identity</code> and thus <code>m = b1 * f1 != 0</code> (assuming the discrete logarithm of <code>H</code>base <code>G</code> is not known), hence <code>f1 = b_x - a_x != 0</code> and <code>P_1 != +-P_2</code>.<a href="#section-8.2-4" class="pilcrow">¶</a></p>
+<p id="section-8.2-5">The prover holds <code>a_x</code>, <code>a_y</code>, <code>b_x</code>, <code>b_y</code>, <code>t_x</code>, <code>t_y</code> and <code>r_1</code>, ..., <code>r_6</code>; the verifier holds <code>C[1]</code>, ..., <code>C[6]</code>. The prover completes the instance with two elements of its own:<a href="#section-8.2-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-8.2-6">
 <pre>
-Prover P                                      Verifier V
-  inputs: a_x,a_y,b_x,b_y,t_x,t_y, r_1..r_6
-                                              inputs: C[1..6]
-
-  tau = (b_y - a_y)/(b_x - a_x);  r_tau &lt;- F_q
-  C_tau = tau*G + r_tau*H
-
-  # masks
-  a_tau, a_rtau, a_f1, a_rf1, a_e1, a_e2 &lt;- F_q
-  a_f3, a_rf3, a_e3 &lt;- F_q
-  a_2, a_r2 &lt;- F_q                 # omit in SM (opening of C[2])
-  beta_2, beta_3, beta_4 &lt;- F_q;   beta_1 &lt;- F_q \ {0}
-
-  T1 = a_tau*G + a_rtau*H
-  T2 = a_f1*G  + a_rf1*H
-  T3 = a_tau*C_f1 + a_e1*H
-  T4 = a_tau*C_tau + a_e2*H
-  T5 = a_f3*G  + a_rf3*H
-  T6 = a_f3*C_tau + a_e3*H
-  T7 = a_2*G   + a_r2*H            # omit in SM
-  U1 = (beta_1*(b_x - a_x))*G
-  U2 = beta_2*C_f1 + beta_3*H
-  U3 = beta_4*G
-                  --- C_tau, T1..T6, T7, U1..U3 ---&gt;   # T7: omit in SM
-                  &lt;---            c &lt;- F_q        ---
-  z_tau  = a_tau + c*tau
-  z_rtau = a_rtau + c*r_tau
-  z_f1   = a_f1  + c*(b_x - a_x)
-  z_rf1  = a_rf1 + c*(r_3 - r_1)
-  z_e1   = a_e1  + c*((r_4 - r_2) - (r_3 - r_1)*tau)
-  z_e2   = a_e2  + c*((r_1 + r_3 + r_5) - r_tau*tau)
-  z_f3   = a_f3  + c*(a_x - t_x)
-  z_rf3  = a_rf3 + c*(r_1 - r_5)
-  z_e3   = a_e3  + c*((r_2 + r_6) - r_tau*(a_x - t_x))
-  z_2    = a_2   + c*a_y           # omit in SM
-  z_r2   = a_r2  + c*r_2           # omit in SM
-  v_1    = beta_2 + c*beta_1
-  v_2    = beta_3 - c*beta_1*(r_3 - r_1)
-  v_3    = beta_4 + c*beta_1*(b_x - a_x)
-                  ---  z_*, v_1, v_2, v_3  ---&gt;
-
-Verifier checks:
-  (1)  z_tau*G + z_rtau*H   == T1 + c*C_tau
-  (2)  z_f1*G  + z_rf1*H    == T2 + c*C_f1
-  (3)  z_tau*C_f1 + z_e1*H  == T3 + c*C_p1
-  (4)  z_tau*C_tau + z_e2*H == T4 + c*C_p2
-  (5)  z_f3*G  + z_rf3*H    == T5 + c*C_f3
-  (6)  z_f3*C_tau + z_e3*H  == T6 + c*C_p3
-  (7)  z_2*G   + z_r2*H     == T7 + c*C[2]      # omit in SM
-  (8)  U1 != identity
-  (9)  c*U1 + U3 == v_3*G
-  (10) c*U1 + U2 == v_1*C_f1 + v_2*H
-</pre><a href="#section-8.2-5" class="pilcrow">¶</a>
+tau = (b_y - a_y) / (b_x - a_x)
+r_tau  &lt;-$ F_q;         Ctau = tau * G + r_tau * H
+beta_1 &lt;-$ F_q \ {0};   U1 = (beta_1 * (b_x - a_x)) * G
+</pre><a href="#section-8.2-6" class="pilcrow">¶</a>
 </div>
-<p id="section-8.2-6">Checks (1)-(2) and (5) are openings; checks (3)-(4) and (6) prove the multiplicative / squaring constraints (C1)-(C3) (check (4) is a squaring proof realizing constraint (C2)); check (7) is the opening proof of <code>C[2]</code>, the <code>y</code>-coordinate commitment of <code>P_1</code>; and checks (8)-(10) are the non-zero proof for <code>C_f1</code>, establishing <code>b_x - a_x != 0</code> and hence <code>P_1 != +-P_2</code>.<a href="#section-8.2-6" class="pilcrow">¶</a></p>
-<p id="section-8.2-7">The lines flagged <code>omit in SM</code> -- the masks <code>a_2, a_r2</code>, the announcement <code>T7</code>, the responses <code>z_2, z_r2</code>, and check (7) -- together form the opening proof of <code>C[2]</code>.
-They are <span class="bcp14">REQUIRED</span> when <code>PA</code> is used standalone, as in the <code>SM x PA</code> composition of <a href="#rok-group" class="auto internal xref">Section 6</a> that proves <code>Z = Hpt + Q</code>.
-They are dropped when <code>PA</code> is composed inside <code>SM</code> (<a href="#scalar-mult" class="auto internal xref">Section 7</a>): there the opening of <code>C[2]</code> is instead extracted from the two colliding transcripts of the bit-challenge execution (Optimisation 3 of <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>), so proving it again would be redundant.<a href="#section-8.2-7" class="pilcrow">¶</a></p>
-<ul class="normal ulEmpty">
-<li class="normal ulEmpty" id="section-8.2-8.1">
-            <p id="section-8.2-8.1.1">Note on further optimizations (from <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>): constraint (C2) uses a dedicated squaring proof rather than a generic multiplication proof, and the mask <code>(a_tau, a_rtau)</code> of <code>C_tau</code> is shared across the three coordinate proofs.<a href="#section-8.2-8.1.1" class="pilcrow">¶</a></p>
-</li>
-        </ul>
-</section>
+<p id="section-8.2-7">and runs the <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span> prover with the witness<a href="#section-8.2-7" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-8.2-8">
+<pre>
+f1 = b_x - a_x   rf1 = r_3 - r_1   e1 = (r_4 - r_2) - rf1 * tau
+f3 = a_x - t_x   rf3 = r_1 - r_5   e3 = (r_2 + r_6) - r_tau * f3
+ay = a_y         r2  = r_2         e2 = (r_1 + r_3 + r_5)
+                                        - r_tau * tau
+b1 = beta_1      b2 = -beta_1 * rf1   m = beta_1 * f1
+</pre><a href="#section-8.2-8" class="pilcrow">¶</a>
 </div>
-<div id="expressing-pa-via-the-sigma-protocols-interface">
-<section id="section-8.3">
-        <h3 id="name-expressing-pa-via-the-sigma">
-<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-expressing-pa-via-the-sigma" class="section-name selfRef">Expressing PA via the Sigma-Protocols Interface</a>
-        </h3>
-<p id="section-8.3-1">Each of checks (1)-(7) and (9)-(10) has the form <code>linear_map(response) == commitment + challenge * image</code>, i.e. a <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span> <code>LinearRelation</code> whose group bases are <code>G</code>, <code>H</code>, and statement commitments (<code>C_f1</code>, <code>C_tau</code>).
-An implementation <span class="bcp14">MAY</span> therefore realize <code>PA</code> by allocating the scalar witnesses (<code>tau</code>, the coordinate values, and the opening randomizers) and elements (<code>G</code>, <code>H</code>, the <code>C_*</code> commitments) with <code>allocate_scalars</code> / <code>allocate_elements</code>, encoding (C1)-(C3) and the opening relations with <code>append_equation</code> and <code>set_elements</code>, and running the resulting batch as a single Sigma protocol.
-The multiplicative and squaring checks (3),(4),(6) use statement commitments (<code>C_f1</code>, <code>C_tau</code>) as bases -- bound to allocated elements via <code>set_elements</code> -- rather than fixed generators; this is the standard Sigma technique for multiplication of committed values, and it stays within the <code>LinearRelation</code> interface.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
-<p id="section-8.3-2">The non-zero proof for <code>C_f1</code> (masks <code>beta_1..beta_4</code>, elements <code>U1, U2, U3</code>, responses <code>v_1, v_2, v_3</code>, and checks (8)-(10)) is a distinct gadget of <span>[<a href="#CDLS" class="cite xref">CDLS</a>]</span> and does not reduce to a plain <code>LinearRelation</code>.
-Its relations (9)-(10) are linear (over bases <code>G</code>, <code>H</code>, <code>C_f1</code>, with the prover-sent <code>U1</code> as image), but the defining ingredient is check (8), <code>U1 != identity</code> -- a non-identity test on a prover message, not a linear relation.
-Because <code>U1 = (beta_1*(b_x - a_x))*G</code> for a uniform nonzero mask <code>beta_1</code>, <code>U1</code> is the identity exactly when <code>b_x - a_x = 0</code>; check (8) thus certifies <code>b_x - a_x != 0</code> (hence <code>P_1 != +-P_2</code>).
-An implementation <span class="bcp14">MUST</span> perform check (8) explicitly, outside the batched <code>LinearRelation</code>.<a href="#section-8.3-2" class="pilcrow">¶</a></p>
+<p id="section-8.2-9"><code>Ctau</code> and <code>U1</code> prepend the NARG string:<a href="#section-8.2-9" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-8.2-10">
+<pre>
+pa_proof =  Group.serialize([Ctau, U1]) || sigma_narg_string
+</pre><a href="#section-8.2-10" class="pilcrow">¶</a>
+</div>
+<p id="section-8.2-11">The verifier rebuilds the instance from <code>C[1]</code>, ...<code>C[6]</code> and the received elements. Then, runs the <span>[<a href="#SIGMA" class="cite xref">SIGMA</a>]</span> verifier; no checks beyond it are needed.<a href="#section-8.2-11" class="pilcrow">¶</a></p>
+<p id="section-8.2-12">When <code>PA</code> is composed with <code>SM</code> (Section 7), the equation <code>C[2] = ay * G + r2 * H</code> is un-necessary (Optimisation 3 of <span>[<a href="#PAPER" class="cite xref">PAPER</a>]</span>) and is therefore omitted, together with the scalar witnesses <code>ay</code>, <code>r2</code>.<a href="#section-8.2-12" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1918,7 +1865,7 @@ It defines the construction behind the <code>ecdsa-p256-db</code> sub-proof algo
 <dl class="references">
 <dt id="FIAT-SHAMIR">[FIAT-SHAMIR]</dt>
         <dd>
-<span class="refAuthor">Orrù, M.</span>, <span class="refTitle">"Fiat-Shamir Transformation"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-fiat-shamir-02</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-fiat-shamir-02">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-fiat-shamir-02</a>&gt;</span>. </dd>
+<span class="refAuthor">Orrù, M.</span>, <span class="refTitle">"Fiat-Shamir Transformation"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-fiat-shamir-03</span>, <time datetime="2026-08-16" class="refDate">16 August 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-fiat-shamir-03">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-fiat-shamir-03</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="FIPS186-5">[FIPS186-5]</dt>
         <dd>
@@ -1942,7 +1889,7 @@ It defines the construction behind the <code>ecdsa-p256-db</code> sub-proof algo
 <dd class="break"></dd>
 <dt id="SIGMA">[SIGMA]</dt>
       <dd>
-<span class="refAuthor">Orrù, M.</span> and <span class="refAuthor">C. Yun</span>, <span class="refTitle">"Interactive Sigma Proofs"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-sigma-protocols-02</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-sigma-protocols-02">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-sigma-protocols-02</a>&gt;</span>. </dd>
+<span class="refAuthor">Orrù, M.</span> and <span class="refAuthor">C. Yun</span>, <span class="refTitle">"Sigma Proofs for Linear Relations"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-sigma-protocols-03</span>, <time datetime="2026-08-16" class="refDate">16 August 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-sigma-protocols-03">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-sigma-protocols-03</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
@@ -1955,11 +1902,11 @@ It defines the construction behind the <code>ecdsa-p256-db</code> sub-proof algo
 <dl class="references">
 <dt id="BBS">[BBS]</dt>
         <dd>
-<span class="refAuthor">Looker, T.</span>, <span class="refAuthor">Kalos, V.</span>, <span class="refAuthor">Whitehead, A.</span>, and <span class="refAuthor">M. Lodder</span>, <span class="refTitle">"The BBS Signature Scheme"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-bbs-signatures-10</span>, <time datetime="2026-01-08" class="refDate">8 January 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-signatures-10">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-signatures-10</a>&gt;</span>. </dd>
+<span class="refAuthor">Looker, T.</span>, <span class="refAuthor">Kalos, V.</span>, <span class="refAuthor">Whitehead, A.</span>, <span class="refAuthor">Lodder, M.</span>, and <span class="refAuthor">G. M. Bernstein</span>, <span class="refTitle">"The BBS Signature Scheme"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-bbs-signatures-14</span>, <time datetime="2026-10-29" class="refDate">29 October 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-signatures-14">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-signatures-14</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="BLIND-BBS">[BLIND-BBS]</dt>
         <dd>
-<span class="refAuthor">Kalos, V.</span> and <span class="refAuthor">G. M. Bernstein</span>, <span class="refTitle">"Blind BBS Signatures"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-bbs-blind-signatures-03</span>, <time datetime="2026-06-26" class="refDate">26 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-blind-signatures-03">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-blind-signatures-03</a>&gt;</span>. </dd>
+<span class="refAuthor">Kalos, V.</span> and <span class="refAuthor">G. M. Bernstein</span>, <span class="refTitle">"Blind BBS Signatures"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-bbs-blind-signatures-05</span>, <time datetime="2026-10-30" class="refDate">30 October 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-blind-signatures-05">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bbs-blind-signatures-05</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="CDLS">[CDLS]</dt>
         <dd>
