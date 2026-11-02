@@ -87,7 +87,7 @@ on the public repo, and (optionally) tags it to submit a new revision to Datatra
 The private history is never squashed or altered.
 
 ```sh
-# Make sure you have the latest of both sides
+# Make sure you have the latest of both sides (start from a clean working tree)
 git checkout main
 git pull origin main
 git fetch public
@@ -102,8 +102,9 @@ git commit -m "Update draft: <summary of what changed>"
 # Push just that single commit to the public repo's main
 git push public release:main
 
-# Back to normal work
-git checkout main
+# Back to normal work. -f is needed: COLLABORATING.md is untracked on release,
+# and a plain checkout refuses to overwrite it (main restores the same file).
+git checkout -f main
 git branch -D release            # optional cleanup
 ```
 
