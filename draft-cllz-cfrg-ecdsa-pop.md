@@ -623,5 +623,5 @@ The "et al." form that appears in running headers is an artifact of the RFC docu
 {:numbered="false"}
 
 This specification is derived from the construction and analysis in {{PAPER}}.
-The Schnorr-type proof of possession formalizes and optimizes the ECDSA-device-binding approach of {{UBIQUE}} and the CDLS / zkAttest proofs of {{CDLS}} and {{ZKATTEST}}, composed through the modular credential framework of {{LSZ}} and the reductions-of-knowledge framework of {{RoK}}. 
+The Schnorr-type proof of possession formalizes and optimizes the ECDSA-device-binding approach of {{UBIQUE}} and the CDLS / zkAttest proofs of {{CDLS}} and {{ZKATTEST}}, composed through the modular credential framework of {{LSZ}} and the reductions-of-knowledge framework of {{RoK}}.
 We would like to especially thank Michele Orrù for his contributions to the draft, namely an optimisation of the PA protocol and its expression via the {{SIGMA}} interface.
