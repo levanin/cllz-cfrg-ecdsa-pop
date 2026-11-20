@@ -1,0 +1,3 @@
+sagelib/
+*.sage.py
+__pycache__/
